@@ -5,6 +5,9 @@ import { HistoryScreen } from './features/history/HistoryScreen';
 import { WorkoutDetailScreen } from './features/history/WorkoutDetailScreen';
 import { ProgressScreen } from './features/progress/ProgressScreen';
 import { SettingsScreen } from './features/settings/SettingsScreen';
+import { ProgramHubScreen } from './features/program/ProgramHubScreen';
+import { SessionEditScreen } from './features/program/SessionEditScreen';
+import { ItemEditScreen } from './features/program/ItemEditScreen';
 import { BottomNav } from './ui/BottomNav';
 
 export default function App() {
@@ -20,6 +23,10 @@ export default function App() {
         <Route path="/history/:workoutId" element={<WorkoutDetailScreen />} />
         <Route path="/progress" element={<ProgressScreen />} />
         <Route path="/settings" element={<SettingsScreen />} />
+        <Route path="/settings/program" element={<ProgramHubScreen />} />
+        <Route path="/settings/program/:templateId" element={<SessionEditScreen />} />
+        <Route path="/settings/program/:templateId/items/new" element={<ItemEditScreen />} />
+        <Route path="/settings/program/:templateId/items/:itemId" element={<ItemEditScreen />} />
       </Routes>
       {!isSession && <BottomNav />}
     </>

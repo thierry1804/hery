@@ -10,10 +10,10 @@
   font-family: var(--font-display);
   font-weight: 800;
   font-size: var(--fs-28);
-  margin: var(--space-2) 0 var(--space-2);
+  margin: var(--space-2) 0;
 }
 
-.card {
+.plate {
   background: var(--fonte-700);
   border-radius: var(--radius-button);
   padding: var(--space-4);
@@ -23,23 +23,27 @@
 }
 
 .row {
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--fs-14);
-  color: var(--fonte-300);
-}
-
-.warn {
-  color: var(--sang);
-}
-
-.link {
   min-height: var(--tap-min);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
   color: var(--magnesie);
-  font-family: var(--font-display);
-  font-weight: 700;
   text-decoration: none;
-  border-top: 1px solid var(--fonte-500);
+  border-bottom: 1px solid var(--fonte-500);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.muted {
+  color: var(--fonte-300);
+  font-size: var(--fs-14);
+}
+
+.backLink {
+  color: var(--fonte-300);
+  font-size: var(--fs-14);
+  text-decoration: none;
 }

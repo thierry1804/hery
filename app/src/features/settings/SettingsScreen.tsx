@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { exportAll, getLastExportAt, importAll } from '../../repositories/data.repo';
 import { formatDateFr } from '../../lib/date';
 import { BigButton } from '../../ui/BigButton';
@@ -47,6 +48,13 @@ export function SettingsScreen() {
   return (
     <div className={styles.screen}>
       <h1 className={styles.title}>Réglages</h1>
+
+      <div className={styles.card}>
+        <span>Programme</span>
+        <Link className={styles.link} to="/settings/program">
+          Modifier le programme →
+        </Link>
+      </div>
 
       <div className={styles.card}>
         <div className={styles.row}>
