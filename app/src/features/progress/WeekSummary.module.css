@@ -1,0 +1,5 @@
+.line {
+  color: var(--fonte-300);
+  font-size: var(--fs-14);
+  margin: 0;
+}

@@ -1,0 +1,26 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-14);
+  color: var(--fonte-300);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--fonte-500);
+}
+
+.name {
+  color: var(--magnesie);
+}
+
+.value {
+  color: var(--fonte-300);
+}
+
+.pr {
+  color: var(--laiton);
+}
