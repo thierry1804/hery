@@ -20,6 +20,9 @@ app/dev-dist/
 *.swp
 .DS_Store
 
+# Git worktrees locaux
+.worktrees/
+
 # Tests
 coverage/
 playwright-report/
