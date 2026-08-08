@@ -1,0 +1,33 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 32px;
+  color: var(--fonte-300);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.rowActive {
+  color: var(--magnesie);
+}
+
+.rowActive .marker {
+  color: var(--acier);
+}
+
+.marker {
+  width: 20px;
+  text-align: center;
+}
+
+.done .value {
+  color: var(--magnesie);
+}

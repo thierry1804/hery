@@ -1,0 +1,16 @@
+{
+  "name": "HERY — Suivi de musculation",
+  "short_name": "HERY",
+  "description": "Suivi de musculation local-first, hors-ligne.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#131519",
+  "theme_color": "#131519",
+  "lang": "fr",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

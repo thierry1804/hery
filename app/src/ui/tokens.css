@@ -1,0 +1,74 @@
+:root {
+  --fonte-900: #131519;
+  --fonte-700: #1e222a;
+  --fonte-500: #2e3540;
+  --fonte-300: #6b7684;
+  --magnesie: #f4f2ec;
+  --laiton: #e0a33a;
+  --acier: #6e93b8;
+  --sang: #c0453c;
+
+  --font-display: 'Archivo', system-ui, sans-serif;
+  --font-body: 'Public Sans', system-ui, sans-serif;
+
+  --fs-12: 12px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-20: 20px;
+  --fs-28: 28px;
+  --fs-48: 48px;
+  --fs-72: 72px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-button: 8px;
+  --radius-pill: 999px;
+  --radius-block: 0px;
+
+  --tap-min: 56px;
+  --tap-primary: 72px;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fonte-900);
+  color: var(--magnesie);
+  font-family: var(--font-body);
+  font-size: var(--fs-16);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

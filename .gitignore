@@ -1,0 +1,36 @@
+# Dépendances
+node_modules/
+.pnp/
+.pnp.js
+
+# Build
+app/dist/
+app/dev-dist/
+*.local
+
+# Environnement
+.env
+.env.*
+!.env.example
+
+# Éditeurs
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+.DS_Store
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+
+# Données personnelles — ne JAMAIS committer
+exports/
+*.hery.json
+photos/
+data/private/
+
+# Logs
+*.log
+npm-debug.log*

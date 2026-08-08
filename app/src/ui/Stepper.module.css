@@ -1,0 +1,38 @@
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.btn {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  border-radius: var(--radius-button);
+  border: 1px solid var(--fonte-500);
+  background: var(--fonte-700);
+  color: var(--magnesie);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-20);
+  cursor: pointer;
+}
+
+.btn:active {
+  background: var(--fonte-500);
+}
+
+.value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  min-width: 3.5ch;
+  text-align: center;
+}
+
+.unit {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 0.4em;
+  color: var(--fonte-300);
+  margin-left: var(--space-1);
+}

@@ -1,0 +1,29 @@
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--fonte-700);
+  border-top: 1px solid var(--fonte-500);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 30;
+}
+
+.link {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--tap-min);
+  padding: var(--space-2) 0;
+  color: var(--fonte-300);
+  text-decoration: none;
+  font-size: var(--fs-12);
+}
+
+.linkActive {
+  color: var(--magnesie);
+}

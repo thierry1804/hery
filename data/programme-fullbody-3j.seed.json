@@ -1,0 +1,120 @@
+{
+  "seedVersion": 1,
+  "generatedAt": "2026-08-08",
+  "note": "Programme Full Body 3 seances/semaine sur 12 semaines. Les items de type warmup et stretch n'ont pas d'exerciseId : ce sont des consignes cochables.",
+  "cycle": {
+    "id": "cycle-fullbody-2026-08",
+    "name": "Full Body 3 mois — reprise",
+    "startDate": "2026-08-03",
+    "weeks": 12,
+    "active": true,
+    "phases": [
+      {
+        "code": "readaptation",
+        "label": "Mois 1 — Réadaptation",
+        "fromWeek": 1,
+        "toWeek": 4,
+        "rules": {
+          "targetRir": [2, 3],
+          "allowLoadIncrease": false,
+          "note": "Charges légères. Garder 2 à 3 répétitions en réserve. Réapprendre les mouvements."
+        }
+      },
+      {
+        "code": "progression",
+        "label": "Mois 2 — Progression",
+        "fromWeek": 5,
+        "toWeek": 8,
+        "rules": {
+          "targetRir": [1, 2],
+          "allowLoadIncrease": true,
+          "loadIncreasePctRange": [5, 10],
+          "extraSetOnMainLifts": true,
+          "note": "Augmenter de 5 à 10 % quand toutes les répétitions sont réalisées. Passer certains exercices principaux à 4 séries."
+        }
+      },
+      {
+        "code": "intensification",
+        "label": "Mois 3 — Intensification",
+        "fromWeek": 9,
+        "toWeek": 12,
+        "rules": {
+          "targetRir": [1, 2],
+          "allowLoadIncrease": true,
+          "restSecRange": [60, 90],
+          "note": "Progresser chaque semaine : un peu plus lourd ou une répétition de plus. La technique prime."
+        }
+      }
+    ]
+  },
+  "warmupItems": [
+    { "order": 1, "kind": "warmup", "label": "Marche rapide ou vélo", "durationSec": 300 },
+    { "order": 2, "kind": "warmup", "label": "Rotations des épaules" },
+    { "order": 3, "kind": "warmup", "label": "Rotations des hanches" },
+    { "order": 4, "kind": "warmup", "label": "Flexions des genoux" },
+    { "order": 5, "kind": "warmup", "label": "Mobilité des chevilles" },
+    { "order": 6, "kind": "warmup", "label": "10 squats sans charge" },
+    { "order": 7, "kind": "warmup", "label": "10 pompes contre un mur ou un banc" }
+  ],
+  "stretchItem": { "kind": "stretch", "label": "Étirements", "durationSec": 300 },
+  "sessionTemplates": [
+    {
+      "id": "tpl-seance-a",
+      "cycleId": "cycle-fullbody-2026-08",
+      "code": "A",
+      "label": "Séance A — Full Body",
+      "dayOfWeek": 1,
+      "targetDurationMin": 75,
+      "items": [
+        { "order": 10, "kind": "strength", "exerciseId": "ex-presse-cuisses", "sets": 3, "repsTarget": 12, "restSec": 90 },
+        { "order": 20, "kind": "strength", "exerciseId": "ex-leg-curl", "sets": 3, "repsTarget": 12, "restSec": 75 },
+        { "order": 30, "kind": "strength", "exerciseId": "ex-developpe-couche-machine", "sets": 3, "repsTarget": 10, "restSec": 90 },
+        { "order": 40, "kind": "strength", "exerciseId": "ex-tirage-poitrine", "sets": 3, "repsTarget": 10, "restSec": 90 },
+        { "order": 50, "kind": "strength", "exerciseId": "ex-developpe-epaules-machine", "sets": 3, "repsTarget": 12, "restSec": 75 },
+        { "order": 60, "kind": "strength", "exerciseId": "ex-curl-biceps", "sets": 2, "repsTarget": 12, "restSec": 60 },
+        { "order": 70, "kind": "strength", "exerciseId": "ex-extension-triceps-poulie", "sets": 2, "repsTarget": 12, "restSec": 60 },
+        { "order": 80, "kind": "core", "exerciseId": "ex-gainage", "sets": 3, "durationSec": 40, "restSec": 45, "notes": "30 à 45 secondes" },
+        { "order": 90, "kind": "cardio", "exerciseId": "ex-marche-inclinee", "durationSec": 900, "notes": "Marche inclinée ou vélo — FC cible 110-130" }
+      ]
+    },
+    {
+      "id": "tpl-seance-b",
+      "cycleId": "cycle-fullbody-2026-08",
+      "code": "B",
+      "label": "Séance B — Full Body",
+      "dayOfWeek": 3,
+      "targetDurationMin": 75,
+      "items": [
+        { "order": 10, "kind": "strength", "exerciseId": "ex-squat-smith", "sets": 3, "repsTarget": 10, "restSec": 90, "notes": "Squat guidé ou goblet squat" },
+        { "order": 20, "kind": "strength", "exerciseId": "ex-fentes-marchees", "sets": 3, "repsTarget": 10, "restSec": 90, "perSide": true },
+        { "order": 30, "kind": "strength", "exerciseId": "ex-developpe-incline-halteres", "sets": 3, "repsTarget": 10, "restSec": 90 },
+        { "order": 40, "kind": "strength", "exerciseId": "ex-rowing-assis-poulie", "sets": 3, "repsTarget": 10, "restSec": 90 },
+        { "order": 50, "kind": "strength", "exerciseId": "ex-elevations-laterales", "sets": 3, "repsTarget": 15, "restSec": 60 },
+        { "order": 60, "kind": "strength", "exerciseId": "ex-curl-marteau", "sets": 2, "repsTarget": 12, "restSec": 60 },
+        { "order": 70, "kind": "strength", "exerciseId": "ex-extension-corde", "sets": 2, "repsTarget": 12, "restSec": 60 },
+        { "order": 80, "kind": "core", "exerciseId": "ex-crunch-cable", "sets": 3, "repsTarget": 15, "restSec": 45 },
+        { "order": 90, "kind": "cardio", "exerciseId": "ex-velo", "durationSec": 900, "notes": "Vélo ou rameur — FC cible 110-130" }
+      ]
+    },
+    {
+      "id": "tpl-seance-c",
+      "cycleId": "cycle-fullbody-2026-08",
+      "code": "C",
+      "label": "Séance C — Full Body",
+      "dayOfWeek": 5,
+      "targetDurationMin": 75,
+      "items": [
+        { "order": 10, "kind": "strength", "exerciseId": "ex-souleve-terre-roumain", "sets": 3, "repsTarget": 10, "restSec": 90, "notes": "Charge légère, technique prioritaire" },
+        { "order": 20, "kind": "strength", "exerciseId": "ex-leg-extension", "sets": 3, "repsTarget": 12, "restSec": 75 },
+        { "order": 30, "kind": "strength", "exerciseId": "ex-ecartes-machine", "sets": 3, "repsTarget": 12, "restSec": 75 },
+        { "order": 40, "kind": "strength", "exerciseId": "ex-tirage-horizontal", "sets": 3, "repsTarget": 10, "restSec": 90 },
+        { "order": 50, "kind": "strength", "exerciseId": "ex-face-pull", "sets": 3, "repsTarget": 15, "restSec": 60 },
+        { "order": 60, "kind": "strength", "exerciseId": "ex-curl-pupitre", "sets": 2, "repsTarget": 12, "restSec": 60 },
+        { "order": 70, "kind": "strength", "exerciseId": "ex-dips-assistes", "sets": 2, "repsTarget": 10, "restSec": 75 },
+        { "order": 80, "kind": "core", "exerciseId": "ex-releves-genoux", "sets": 3, "repsTarget": 12, "restSec": 45 },
+        { "order": 85, "kind": "core", "exerciseId": "ex-gainage-lateral", "sets": 2, "durationSec": 30, "restSec": 30, "perSide": true },
+        { "order": 90, "kind": "cardio", "exerciseId": "ex-tapis", "durationSec": 900, "notes": "Tapis roulant — FC cible 110-130" }
+      ]
+    }
+  ]
+}

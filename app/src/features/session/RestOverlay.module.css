@@ -1,0 +1,47 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--fonte-900);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  z-index: 40;
+  animation: rise 200ms ease-out;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.label {
+  color: var(--acier);
+  font-family: var(--font-body);
+  font-size: var(--fs-16);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.countdown {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-72);
+  color: var(--acier);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-4);
+  width: 100%;
+  padding: 0 var(--space-4);
+}
+
+.actions > * {
+  flex: 1;
+}
