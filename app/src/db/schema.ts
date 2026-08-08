@@ -176,4 +176,6 @@ export const SETTINGS_KEYS = {
   seedVersion: 'seedVersion',
   dailyProteinTargetG: 'dailyProteinTargetG',
   storagePersisted: 'storagePersisted',
+  lastSyncedAt: 'lastSyncedAt',
+  lastSyncStatus: 'lastSyncStatus',
 } as const;

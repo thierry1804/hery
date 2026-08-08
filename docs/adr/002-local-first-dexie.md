@@ -1,6 +1,6 @@
 # ADR-002 — Local-first sur Dexie, sans backend
 
-- **Statut** : accepté
+- **Statut** : accepté — supersédé partiellement par [ADR-005](005-cloud-sync-neon.md) pour la sync cloud optionnelle (Dexie reste la vérité en séance)
 - **Date** : 2026-08-08
 
 ## Contexte

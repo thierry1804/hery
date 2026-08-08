@@ -10,7 +10,7 @@ Application personnelle de suivi de séances de musculation. PWA installable, **
 | **Type** | Side project personnel (hors cadre professionnel) |
 | **Utilisateur cible V0** | 1 seul (l'auteur) |
 | **Stack** | React + Vite + TypeScript, PWA, Dexie/IndexedDB |
-| **Backend** | Aucun en V0 et V1 (local-first) |
+| **Backend** | Optionnel : sync Neon via `server/` (ADR-005) ; Dexie reste local-first |
 | **Dernière mise à jour** | 8 août 2026 |
 
 ---
@@ -83,10 +83,30 @@ npm i -D vite-plugin-pwa vitest @testing-library/react @playwright/test
 
 Les seeds de `data/` sont à importer tels quels dans `app/src/data/`.
 
+## Sync cloud (optionnel)
+
+Voir [ADR-005](docs/adr/005-cloud-sync-neon.md).
+
+```bash
+# API
+cd server
+cp .env.example .env   # DATABASE_URL Neon, JWT_SECRET, CORS_ORIGIN
+npm install
+npm run db:push
+npm run dev            # http://localhost:8787
+
+# App
+cd ../app
+cp .env.example .env   # VITE_API_URL=http://localhost:8787
+npm run dev
+```
+
+Réglages → Compte → créer un compte / synchroniser. La séance active ne dépend pas du réseau.
+
 ## Principes non négociables
 
 1. **2 secondes par série.** Toute fonctionnalité qui allonge la saisie pendant la séance est refusée ou déplacée hors séance.
 2. **Hors-ligne d'abord.** L'app fonctionne intégralement sans réseau. Le réseau est un bonus, jamais une dépendance.
-3. **Zéro compte, zéro serveur en V0/V1.** Les données restent sur l'appareil. Sauvegarde par export de fichier.
+3. **Hors-ligne d'abord ; sync cloud optionnelle.** Les données vivent dans Dexie. Un compte peut synchroniser vers Neon (voir ci-dessous). L'export JSON reste un filet de secours.
 4. **Pas de social, pas de classement.** Décision produit assumée, voir [ADR-003](docs/adr/003-coach-moteur-de-regles.md) et le document produit.
 5. **Aucune mécanique de jeu qui pousse au volume.** Le repos fait partie du programme ; il n'est jamais pénalisé.

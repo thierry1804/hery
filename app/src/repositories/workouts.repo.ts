@@ -257,10 +257,12 @@ export async function completeWorkout(workoutId: string): Promise<void> {
     totalTonnageKg: tonnage,
     updatedAt: ts,
   });
+  void import('../sync/runSync').then((m) => m.runSync());
 }
 
 export async function abandonWorkout(workoutId: string): Promise<void> {
   await db.workouts.update(workoutId, { status: 'abandoned', updatedAt: nowIso() });
+  void import('../sync/runSync').then((m) => m.runSync());
 }
 
 export async function listWorkouts(): Promise<Workout[]> {

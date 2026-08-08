@@ -8,6 +8,9 @@ import { SettingsScreen } from './features/settings/SettingsScreen';
 import { ProgramHubScreen } from './features/program/ProgramHubScreen';
 import { SessionEditScreen } from './features/program/SessionEditScreen';
 import { ItemEditScreen } from './features/program/ItemEditScreen';
+import { LoginScreen } from './features/auth/LoginScreen';
+import { RegisterScreen } from './features/auth/RegisterScreen';
+import { SyncBootstrap } from './sync/SyncBootstrap';
 import { BottomNav } from './ui/BottomNav';
 
 export default function App() {
@@ -16,6 +19,7 @@ export default function App() {
 
   return (
     <>
+      <SyncBootstrap />
       <Routes>
         <Route path="/" element={<TodayScreen />} />
         <Route path="/session/:workoutId" element={<ActiveSessionScreen />} />
@@ -27,6 +31,8 @@ export default function App() {
         <Route path="/settings/program/:templateId" element={<SessionEditScreen />} />
         <Route path="/settings/program/:templateId/items/new" element={<ItemEditScreen />} />
         <Route path="/settings/program/:templateId/items/:itemId" element={<ItemEditScreen />} />
+        <Route path="/login" element={<LoginScreen />} />
+        <Route path="/register" element={<RegisterScreen />} />
       </Routes>
       {!isSession && <BottomNav />}
     </>

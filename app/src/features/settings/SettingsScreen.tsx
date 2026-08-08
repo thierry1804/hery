@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { exportAll, getLastExportAt, importAll } from '../../repositories/data.repo';
+import { db } from '../../db/db';
+import { SETTINGS_KEYS } from '../../db/schema';
 import { formatDateFr } from '../../lib/date';
+import { exportAll, getLastExportAt, importAll } from '../../repositories/data.repo';
+import { apiMe } from '../../sync/api';
+import { runSync } from '../../sync/runSync';
+import { clearToken, getToken } from '../../sync/token';
 import { BigButton } from '../../ui/BigButton';
 import styles from './SettingsScreen.module.css';
 import pkg from '../../../package.json';
@@ -11,13 +16,36 @@ export function SettingsScreen() {
   const [persisted, setPersisted] = useState<boolean | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState<string>('');
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | undefined>();
+  const [syncing, setSyncing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const refreshAccount = async () => {
+    const token = getToken();
+    if (!token) {
+      setEmail(null);
+      return;
+    }
+    try {
+      const user = await apiMe();
+      setEmail(user.email);
+    } catch {
+      setEmail(null);
+    }
+    const status = await db.settings.get(SETTINGS_KEYS.lastSyncStatus);
+    const synced = await db.settings.get(SETTINGS_KEYS.lastSyncedAt);
+    setSyncStatus(typeof status?.value === 'string' ? status.value : '');
+    setLastSyncedAt(typeof synced?.value === 'string' ? synced.value : undefined);
+  };
 
   useEffect(() => {
     void getLastExportAt().then(setLastExportAt);
     if (navigator.storage?.persisted) {
       void navigator.storage.persisted().then(setPersisted);
     }
+    void refreshAccount();
   }, []);
 
   const isStale = lastExportAt ? Date.now() - new Date(lastExportAt).getTime() > 14 * 24 * 3600 * 1000 : true;
@@ -52,11 +80,71 @@ export function SettingsScreen() {
     }
   };
 
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await runSync();
+      await refreshAccount();
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleLogout = () => {
+    clearToken();
+    setEmail(null);
+    setSyncStatus('');
+    setLastSyncedAt(undefined);
+  };
+
+  const syncLabel =
+    syncStatus === 'ok'
+      ? 'OK'
+      : syncStatus === 'error'
+        ? 'Erreur'
+        : syncStatus === 'pending'
+          ? 'En attente'
+          : '—';
+
   return (
     <div className={styles.screen}>
       <header className={styles.header}>
         <h1 className={styles.title}>Réglages</h1>
       </header>
+
+      <section className={styles.plate}>
+        <h2 className={styles.sectionTitle}>Compte</h2>
+        {email ? (
+          <>
+            <div className={styles.row}>
+              <span>Email</span>
+              <span>{email}</span>
+            </div>
+            <div className={styles.row}>
+              <span>Dernière sync</span>
+              <span>
+                {lastSyncedAt ? formatDateFr(lastSyncedAt.slice(0, 10)) : 'jamais'} · {syncLabel}
+              </span>
+            </div>
+            <BigButton variant="primary" disabled={syncing} onClick={() => void handleSync()}>
+              Synchroniser
+            </BigButton>
+            <BigButton variant="ghost" onClick={handleLogout}>
+              Déconnexion
+            </BigButton>
+          </>
+        ) : (
+          <>
+            <p className={styles.hint}>Sync cloud optionnelle. L’app reste utilisable hors-ligne sans compte.</p>
+            <Link className={styles.link} to="/login">
+              Connexion →
+            </Link>
+            <Link className={styles.link} to="/register">
+              Créer un compte →
+            </Link>
+          </>
+        )}
+      </section>
 
       <section className={styles.plate}>
         <h2 className={styles.sectionTitle}>Programme</h2>
