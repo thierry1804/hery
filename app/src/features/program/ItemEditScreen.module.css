@@ -1,0 +1,90 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  color: var(--fonte-300);
+  font-size: var(--fs-14);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  min-height: var(--tap-min);
+  border: 1px solid var(--fonte-500);
+  border-radius: var(--radius-button);
+  background: var(--fonte-900);
+  color: var(--magnesie);
+  padding: var(--space-3);
+  font: inherit;
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: 2px solid var(--magnesie);
+  outline-offset: 2px;
+}
+
+.pickerButton {
+  min-height: var(--tap-min);
+  border: 1px solid var(--fonte-500);
+  border-radius: var(--radius-button);
+  background: transparent;
+  color: var(--magnesie);
+  padding: var(--space-3);
+  text-align: left;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pickerButton:focus-visible {
+  outline: 2px solid var(--magnesie);
+  outline-offset: 2px;
+}
+
+.range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.checkbox {
+  min-height: var(--tap-min);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--magnesie);
+}
+
+.checkbox input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--laiton);
+}
+
+.error {
+  margin: 0;
+  color: var(--sang);
+  font-size: var(--fs-14);
+}
+
+.confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.confirmation p {
+  margin: 0 0 var(--space-2);
+  color: var(--fonte-300);
+}
+
+@media (max-width: 420px) {
+  .range {
+    grid-template-columns: 1fr;
+  }
+}
