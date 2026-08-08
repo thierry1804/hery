@@ -58,8 +58,8 @@ une API authentifiée.
 
 - Mot de passe hashé (bcrypt ou argon2).
 - JWT signé avec `JWT_SECRET` (serveur uniquement).
-- Client : token dans settings Dexie (ou localStorage) ; header
-  `Authorization: Bearer <jwt>`.
+- Client : JWT en `localStorage` uniquement (jamais dans `settings` syncées) ;
+  header `Authorization: Bearer <jwt>`.
 - Sans token : l’app fonctionne 100 % local ; sync désactivée.
 - 401 : invalider le token local, continuer offline, message discret.
 
@@ -174,7 +174,7 @@ Pas de merge champ par champ en V0.
 
 ## ADR
 
-Cette feature **amene** un backend : mettre à jour / superseder ADR-002
+Cette feature **amène** un backend : mettre à jour / superseder ADR-002
 (local-first inchangé pour l’UI ; backend ajouté pour sync optionnelle).
 Nouvel ADR : « Sync bidirectionnelle via API + Neon ».
 
