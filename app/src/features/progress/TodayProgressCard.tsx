@@ -10,7 +10,18 @@ export function TodayProgressCard() {
   const [snapshot, setSnapshot] = useState<ProgressSnapshot | null>(null);
 
   useEffect(() => {
-    void getProgressSnapshot().then(setSnapshot);
+    void getProgressSnapshot()
+      .then(setSnapshot)
+      .catch(() =>
+        setSnapshot({
+          hasAnyCompletedWorkout: false,
+          week: { sessionsDone: 0, sessionsTarget: 3, tonnageKg: 0, prCount: 0 },
+          weekBars: [],
+          movers: [],
+          recentPrs: [],
+          lifts: [],
+        }),
+      );
   }, []);
 
   if (!snapshot) return null;

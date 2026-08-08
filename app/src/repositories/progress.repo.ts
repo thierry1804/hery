@@ -79,6 +79,7 @@ export async function getProgressSnapshot(now: Date = new Date()): Promise<Progr
     const exercise = exerciseById.get(exerciseId);
     if (!exercise) continue;
 
+    const multiplier = exercise.unilateral ? 2 : 1;
     const sessions: ExerciseSessionLift[] = [];
     const orderedWorkouts = [...setsByWorkout.keys()]
       .map((workoutId) => completedWorkoutById.get(workoutId)!)
@@ -111,7 +112,7 @@ export async function getProgressSnapshot(now: Date = new Date()): Promise<Progr
         maxWeightKg: maxSet.weightKg!,
         repsAtMax: maxSet.reps!,
         tonnageKg: weightSets.reduce(
-          (total, setLog) => total + setLog.weightKg! * setLog.reps!,
+          (total, setLog) => total + setLog.weightKg! * setLog.reps! * multiplier,
           0,
         ),
         hadPr: prSets.length > 0,
