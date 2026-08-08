@@ -10,6 +10,7 @@
 .textarea {
   width: 100%;
   min-height: var(--tap-min);
+  box-sizing: border-box;
   border: 1px solid var(--fonte-500);
   border-radius: var(--radius-button);
   background: var(--fonte-900);
