@@ -1,0 +1,37 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.empty {
+  margin: 0;
+  color: var(--fonte-300);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--space-3);
+  background: var(--fonte-900);
+  border: 1px solid var(--fonte-500);
+  border-radius: var(--radius-button);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.option:active {
+  background: var(--fonte-500);
+}
+
+.optionName {
+  font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
+  font-weight: 700;
+  font-size: var(--fs-16);
+}

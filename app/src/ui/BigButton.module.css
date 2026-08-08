@@ -6,6 +6,7 @@
   background: var(--fonte-500);
   color: var(--magnesie);
   font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
   font-weight: 700;
   font-size: var(--fs-20);
   letter-spacing: 0.02em;
@@ -14,9 +15,14 @@
   justify-content: center;
   gap: var(--space-2);
   cursor: pointer;
+  transition: background-color 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.button:active {
+.button:hover:not(:disabled) {
+  background: #394252;
+}
+
+.button:active:not(:disabled) {
   background: var(--fonte-300);
 }
 
@@ -36,7 +42,17 @@
 }
 
 .danger {
+  background: transparent;
+  border: 1px solid var(--sang);
   color: var(--sang);
+}
+
+.danger:hover:not(:disabled) {
+  background: rgba(192, 69, 60, 0.12);
+}
+
+.danger:active:not(:disabled) {
+  background: rgba(192, 69, 60, 0.22);
 }
 
 .button:disabled {

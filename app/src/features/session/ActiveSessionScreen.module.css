@@ -4,13 +4,16 @@
   flex-direction: column;
   background: var(--fonte-900);
   overflow: hidden;
+  padding-top: env(safe-area-inset-top);
 }
 
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  min-height: 40px;
   border-bottom: 1px solid var(--fonte-700);
   font-size: var(--fs-14);
   color: var(--fonte-300);
@@ -21,56 +24,180 @@
   background: none;
   border: none;
   color: var(--fonte-300);
-  font-size: var(--fs-16);
+  font-size: var(--fs-14);
+  font-weight: 500;
+  min-height: 40px;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exit:hover {
+  color: var(--magnesie);
+}
+
+.progress {
+  font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
+  font-weight: 700;
+  color: var(--fonte-300);
+  white-space: nowrap;
+}
+
+.hero {
+  position: relative;
+  flex: 0 2 auto;
+  width: 100%;
+  height: clamp(140px, 24dvh, 200px);
+  max-height: 28dvh;
+  min-height: 64px;
+  overflow: hidden;
+}
+
+.heroDense {
+  height: clamp(88px, 14dvh, 120px);
+  max-height: 16dvh;
+  min-height: 56px;
+}
+
+.heroDense .heroScrim {
+  padding: var(--space-3) var(--space-4) var(--space-2);
+}
+
+.heroDense .exerciseName {
+  font-size: var(--fs-20);
+}
+
+@media (max-height: 700px) {
+  .hero:not(.heroDense) {
+    height: clamp(100px, 18dvh, 140px);
+  }
+
+  .controls {
+    gap: var(--space-1);
+    padding-top: var(--space-1);
+  }
+
+  .actions {
+    padding-top: var(--space-2);
+    gap: var(--space-1);
+  }
+}
+
+.heroScrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--space-5) var(--space-4) var(--space-3);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(19, 21, 25, 0.55) 35%,
+    rgba(19, 21, 25, 0.92) 100%
+  );
+  pointer-events: none;
 }
 
 .header {
-  padding: var(--space-4);
+  padding: var(--space-4) var(--space-4) var(--space-3);
   flex: 0 0 auto;
 }
 
 .exerciseName {
   font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
   font-weight: 800;
   font-size: var(--fs-28);
+  line-height: 1.15;
   margin: 0;
+  color: var(--magnesie);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-2);
 }
 
 .lastTime {
-  color: var(--fonte-300);
+  color: #c5c9d1;
   font-size: var(--fs-14);
-  margin: var(--space-1) 0 0;
+  margin: 0;
 }
 
 .machineSettings {
-  color: var(--fonte-300);
+  color: #a8b0bd;
   font-size: var(--fs-12);
-  margin: 2px 0 0;
+  margin: 0;
+}
+
+.setBadge {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
+  font-weight: 700;
+  font-size: var(--fs-14);
+  color: var(--acier);
 }
 
 .setList {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: min(40dvh, 280px);
+  margin: 0;
+  border-top: 1px solid var(--fonte-500);
+  border-bottom: 1px solid var(--fonte-500);
   overflow: hidden;
-  border-top: 1px solid var(--fonte-700);
-  border-bottom: 1px solid var(--fonte-700);
 }
 
-.inputZone {
-  flex: 0 0 auto;
-  padding: var(--space-4);
+.controls {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-}
-
-.weightRow {
-  display: flex;
   justify-content: center;
+  align-items: stretch;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4) 0;
 }
 
+.timeHint {
+  margin: 0;
+  text-align: center;
+  color: var(--fonte-300);
+  font-size: var(--fs-16);
+}
+
+.weightRow,
 .repsRow {
   display: flex;
   justify-content: center;
+}
+
+.weightRow {
+  padding: 0;
+}
+
+.repsRow {
+  opacity: 0.95;
+}
+
+.actions {
+  flex: 0 0 auto;
+  padding: var(--space-3) var(--space-4);
+  padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  background: linear-gradient(180deg, transparent 0%, var(--fonte-900) 18%);
 }
 
 .secondary {
@@ -82,69 +209,126 @@
   flex: 1;
 }
 
+.undoSet {
+  align-self: center;
+  background: none;
+  border: none;
+  color: var(--fonte-300);
+  font-size: var(--fs-12);
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  cursor: pointer;
+}
+
+.undoSet:hover {
+  color: var(--magnesie);
+}
+
+/* Warmup / stretch / cardio keep shared layout helpers */
+.inputZone {
+  flex: 0 0 auto;
+  margin-top: auto;
+  padding: var(--space-4);
+  padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .checklist {
   flex: 1 1 auto;
   overflow-y: auto;
   padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .checkItem {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  width: 100%;
   min-height: var(--tap-min);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
   background: var(--fonte-700);
-  border-radius: var(--radius-button);
+  border: none;
+  border-radius: var(--radius-block);
+  color: inherit;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
+  user-select: none;
 }
 
 .checkItemDone {
   color: var(--fonte-300);
+}
+
+.checkItemDone span:last-child {
   text-decoration: line-through;
 }
 
 .cardioBlock {
   flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-  padding: var(--space-4);
+  overflow: hidden;
+}
+
+.cardioHero {
+  position: relative;
+  flex: 0 1 auto;
+  width: 100%;
+  height: clamp(140px, 28dvh, 220px);
+  max-height: 32dvh;
+  min-height: 96px;
+  overflow: hidden;
 }
 
 .modalityRow {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-wrap: wrap;
+  align-content: flex-start;
   gap: var(--space-2);
-  justify-content: center;
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+.cardioActions {
+  flex: 0 0 auto;
+  padding: var(--space-3) var(--space-4);
+  padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
 }
 
 .modalityBtn {
+  min-height: 44px;
   padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-button);
   border: 1px solid var(--fonte-500);
   background: var(--fonte-700);
   color: var(--magnesie);
+  font-size: var(--fs-14);
+  cursor: pointer;
 }
 
 .modalityBtnActive {
   background: var(--acier);
   color: var(--fonte-900);
   border-color: var(--acier);
+  font-weight: 700;
 }
 
 .finished {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: var(--space-4);
-  padding: var(--space-4);
-  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
 }

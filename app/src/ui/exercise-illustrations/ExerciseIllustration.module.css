@@ -1,0 +1,38 @@
+.wrap {
+  position: relative;
+  overflow: hidden;
+  background: var(--fonte-700);
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+}
+
+/* Bandeau séance : remplit le cadre parent (hauteur gérée par l’écran) */
+.hero,
+.heroDense {
+  width: 100%;
+  height: 100%;
+  flex: none;
+  border-radius: 0;
+}
+
+/* Pastille dans la feuille Remplacer */
+.compact {
+  width: 96px;
+  height: 72px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-button);
+}
+
+/* Vignette listes / picker */
+.thumb {
+  width: 48px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-button);
+}

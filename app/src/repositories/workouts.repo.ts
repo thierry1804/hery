@@ -132,7 +132,7 @@ export async function getLastCompletedSets(exerciseId: string, excludeWorkoutId?
     candidates.map(async (we) => ({ we, workout: await db.workouts.get(we.workoutId) })),
   );
   const completed = withWorkouts
-    .filter((x) => x.workout && x.workout.status !== 'abandoned' && x.workout.deletedAt == null)
+    .filter((x) => x.workout && x.workout.status === 'completed' && x.workout.deletedAt == null)
     .sort((a, b) => (a.workout!.date < b.workout!.date ? 1 : -1));
 
   if (completed.length === 0) return [];

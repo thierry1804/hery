@@ -28,16 +28,25 @@
 }
 
 .exercise {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
   min-height: var(--tap-min);
   border: 0;
   border-bottom: 1px solid var(--fonte-500);
   background: transparent;
   color: var(--magnesie);
-  padding: var(--space-3) 0;
+  padding: var(--space-2) 0;
   text-align: left;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+}
+
+.exerciseName {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .exercise:focus-visible {

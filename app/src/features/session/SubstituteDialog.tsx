@@ -1,6 +1,8 @@
 import type { Exercise } from '../../db/schema';
 import { Sheet } from '../../ui/Sheet';
 import { BigButton } from '../../ui/BigButton';
+import { ExerciseIllustration } from '../../ui/exercise-illustrations/ExerciseIllustration';
+import styles from './SubstituteDialog.module.css';
 
 interface Props {
   alternatives: Exercise[];
@@ -11,13 +13,17 @@ interface Props {
 export function SubstituteDialog({ alternatives, onPick, onClose }: Props) {
   return (
     <Sheet title="Remplacer l'exercice" onClose={onClose}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {alternatives.length === 0 && <p>Aucune alternative disponible.</p>}
+      <div className={styles.list}>
+        {alternatives.length === 0 && <p className={styles.empty}>Aucune alternative disponible.</p>}
         {alternatives.map((alt) => (
-          <BigButton key={alt.id} variant="ghost" onClick={() => onPick(alt)}>
-            {alt.name}
-          </BigButton>
+          <button key={alt.id} type="button" className={styles.option} onClick={() => onPick(alt)}>
+            <ExerciseIllustration exerciseId={alt.id} name={alt.name} variant="compact" />
+            <span className={styles.optionName}>{alt.name}</span>
+          </button>
         ))}
+        <BigButton variant="ghost" onClick={onClose}>
+          Annuler
+        </BigButton>
       </div>
     </Sheet>
   );

@@ -10,6 +10,7 @@ import {
 } from '../../repositories/program.repo';
 import { BigButton } from '../../ui/BigButton';
 import { Stepper } from '../../ui/Stepper';
+import { ExerciseIllustration } from '../../ui/exercise-illustrations/ExerciseIllustration';
 import { DAY_NAMES } from './days';
 import { formatPrescription } from './formatPrescription';
 import shared from './programShared.module.css';
@@ -175,8 +176,15 @@ export function SessionEditScreen() {
                     className={styles.itemLink}
                     to={`/settings/program/${templateId}/items/${item.id}`}
                   >
-                    <span className={styles.itemName}>{itemName}</span>
-                    <span className={shared.muted}>{formatPrescription(item)}</span>
+                    <ExerciseIllustration
+                      variant="thumb"
+                      exerciseId={item.exerciseId}
+                      name={itemName}
+                    />
+                    <span className={styles.itemText}>
+                      <span className={styles.itemName}>{itemName}</span>
+                      <span className={shared.muted}>{formatPrescription(item)}</span>
+                    </span>
                   </Link>
                   <div className={styles.reorder}>
                     <button

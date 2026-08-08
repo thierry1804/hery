@@ -12,6 +12,7 @@ import {
 import { BigButton } from '../../ui/BigButton';
 import { Sheet } from '../../ui/Sheet';
 import { Stepper } from '../../ui/Stepper';
+import { ExerciseIllustration } from '../../ui/exercise-illustrations/ExerciseIllustration';
 import { ExercisePickerSheet } from './ExercisePickerSheet';
 import shared from './programShared.module.css';
 import styles from './ItemEditScreen.module.css';
@@ -236,7 +237,18 @@ export function ItemEditScreen() {
 
             {(form.kind === 'strength' || form.kind === 'core' || form.kind === 'cardio') && (
               <button type="button" className={styles.pickerButton} onClick={() => setShowPicker(true)}>
-                {form.exerciseId ? exerciseNames[form.exerciseId] || form.label : 'Choisir un exercice'}
+                {form.exerciseId ? (
+                  <>
+                    <ExerciseIllustration
+                      variant="thumb"
+                      exerciseId={form.exerciseId}
+                      name={exerciseNames[form.exerciseId] || form.label}
+                    />
+                    <span>{exerciseNames[form.exerciseId] || form.label}</span>
+                  </>
+                ) : (
+                  'Choisir un exercice'
+                )}
               </button>
             )}
 

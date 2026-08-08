@@ -10,6 +10,7 @@
 
   --font-display: 'Archivo', system-ui, sans-serif;
   --font-body: 'Public Sans', system-ui, sans-serif;
+  --font-display-stretch: 112%;
 
   --fs-12: 12px;
   --fs-14: 14px;
@@ -53,6 +54,8 @@ body {
   color: var(--magnesie);
   font-family: var(--font-body);
   font-size: var(--fs-16);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: contain;
 }
@@ -62,8 +65,23 @@ button {
   color: inherit;
 }
 
+a {
+  color: inherit;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--magnesie);
+  outline-offset: 2px;
+}
+
 .tabular {
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
 }
 
 @media (prefers-reduced-motion: reduce) {

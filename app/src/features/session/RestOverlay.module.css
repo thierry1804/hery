@@ -1,47 +1,373 @@
 .overlay {
   position: fixed;
   inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: calc(var(--space-8) + env(safe-area-inset-top)) var(--space-5)
+    calc(var(--space-6) + env(safe-area-inset-bottom));
+  overflow: hidden;
   background: var(--fonte-900);
+  animation: rise 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.wash {
+  position: absolute;
+  top: -20%;
+  left: -30%;
+  width: 160%;
+  height: 140%;
+  background:
+    radial-gradient(ellipse 50% 40% at 30% 40%, rgba(110, 147, 184, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 35% at 70% 55%, rgba(46, 53, 64, 0.85) 0%, transparent 60%);
+  animation: washDrift 12s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: transform, opacity;
+}
+
+.glowTrack,
+.glowTrackSecondary,
+.glowTrackDrift {
+  position: absolute;
+  will-change: transform, opacity;
+}
+
+.glowTrack {
+  top: 14%;
+  left: 50%;
+  width: min(130vw, 560px);
+  height: min(130vw, 560px);
+}
+
+.glowFloat {
+  width: 100%;
+  height: 100%;
+  animation: trackFloat 4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: transform;
+}
+
+.glowTrackDrift {
+  top: 28%;
+  left: 18%;
+  width: min(70vw, 280px);
+  height: min(70vw, 280px);
+  animation: driftOrb 11s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.glowTrackSecondary {
+  bottom: -22%;
+  left: 50%;
+  width: min(150vw, 700px);
+  height: min(100vw, 460px);
+}
+
+.glow,
+.glowSecondary,
+.glowDrift {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  will-change: transform, opacity;
+}
+
+.glow {
+  background: radial-gradient(
+    circle,
+    rgba(110, 147, 184, 0.38) 0%,
+    rgba(110, 147, 184, 0.14) 38%,
+    transparent 68%
+  );
+  animation: breathe 2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.glowDrift {
+  background: radial-gradient(circle, rgba(110, 147, 184, 0.2) 0%, transparent 70%);
+  animation: breathe 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.glowSecondary {
+  background: radial-gradient(circle, rgba(30, 40, 52, 0.95) 0%, rgba(19, 21, 25, 0.2) 55%, transparent 72%);
+  animation: breatheSlow 4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.pulseField {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  width: min(90vw, 360px);
+  height: min(90vw, 360px);
+  transform: translate(-50%, -50%);
+}
+
+.pulseRing {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(110, 147, 184, 0.35);
+  opacity: 0;
+  animation: pulseOut 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.pulseRingDelay {
+  animation-delay: 1.4s;
+}
+
+.overlayUrgent .glow {
+  background: radial-gradient(
+    circle,
+    rgba(244, 242, 236, 0.22) 0%,
+    rgba(110, 147, 184, 0.16) 40%,
+    transparent 68%
+  );
+}
+
+.overlayUrgent .wash {
+  background:
+    radial-gradient(ellipse 50% 40% at 35% 40%, rgba(244, 242, 236, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 35% at 70% 55%, rgba(110, 147, 184, 0.14) 0%, transparent 60%);
+}
+
+.overlayUrgent .pulseRing {
+  border-color: rgba(244, 242, 236, 0.4);
+}
+
+.overlayUrgent .countdown {
+  color: var(--magnesie);
+}
+
+.overlayUrgent .ringProgress {
+  stroke: var(--magnesie);
+}
+
+.overlayUrgent .label {
+  color: var(--magnesie);
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--space-6);
-  z-index: 40;
-  animation: rise 200ms ease-out;
+  width: 100%;
 }
 
-@keyframes rise {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
+.nextHint {
+  margin: 0;
+  max-width: 28ch;
+  text-align: center;
+  color: var(--fonte-300);
+  font-size: var(--fs-14);
+  line-height: 1.35;
+}
+
+.ringWrap {
+  position: relative;
+  width: 300px;
+  height: 300px;
+}
+
+.ringPlate {
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  background: var(--fonte-700);
+}
+
+.ring {
+  position: relative;
+  display: block;
+  transform: rotate(-90deg);
+}
+
+.ringTrack,
+.ringProgress {
+  fill: none;
+}
+
+.ringTrack {
+  stroke: var(--fonte-500);
+}
+
+.ringProgress {
+  stroke: var(--acier);
+  stroke-linecap: round;
+  transition: stroke 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ringCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: 52px;
 }
 
 .label {
   color: var(--acier);
   font-family: var(--font-body);
-  font-size: var(--fs-16);
+  font-size: var(--fs-14);
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  transition: color 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .countdown {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
   font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
   font-weight: 800;
-  font-size: var(--fs-72);
+  font-size: 72px;
+  line-height: 0.95;
   color: var(--acier);
+  letter-spacing: -0.02em;
+  transition: color 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.minutes,
+.seconds {
+  min-width: 1.05em;
+  text-align: center;
+}
+
+.colon {
+  width: 0.28em;
+  text-align: center;
+  opacity: 0.45;
+}
+
+.total {
+  color: var(--fonte-300);
+  font-size: var(--fs-12);
+  font-weight: 500;
 }
 
 .actions {
+  position: relative;
+  z-index: 1;
   display: flex;
-  gap: var(--space-4);
+  flex-direction: column;
+  gap: var(--space-3);
   width: 100%;
-  padding: 0 var(--space-4);
+  max-width: 420px;
 }
 
-.actions > * {
-  flex: 1;
+@keyframes rise {
+  from {
+    opacity: 0.55;
+    transform: translateY(10%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes washDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  33% {
+    transform: translate3d(4%, -3%, 0) rotate(4deg) scale(1.05);
+  }
+  66% {
+    transform: translate3d(-5%, 2%, 0) rotate(-3deg) scale(1.08);
+  }
+}
+
+@keyframes trackFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes driftOrb {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(42vw, -18px);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.14);
+    opacity: 1;
+  }
+}
+
+@keyframes breatheSlow {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseOut {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.55;
+  }
+  70% {
+    opacity: 0.12;
+  }
+  100% {
+    transform: scale(1.85);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    animation: none;
+  }
+
+  .wash,
+  .glow,
+  .glowSecondary,
+  .glowDrift,
+  .glowFloat,
+  .glowTrackDrift,
+  .pulseRing {
+    animation: none !important;
+  }
+
+  .ringProgress {
+    transition: none;
+  }
 }

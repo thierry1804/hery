@@ -10,31 +10,38 @@ interface Props {
   onChange: (value: number) => void;
 }
 
+function formatFr(n: number, decimals: number): string {
+  return decimals > 0 ? n.toFixed(decimals).replace('.', ',') : String(n);
+}
+
 export function Stepper({ value, step, min = 0, unit, fontSizePx, decimals = 0, onChange }: Props) {
   const clamp = (v: number) => Math.max(min, Number(v.toFixed(2)));
-  const display = decimals > 0 ? value.toFixed(decimals) : String(value);
+  const display = formatFr(value, decimals);
+  const stepLabel = formatFr(step, decimals > 0 || step % 1 !== 0 ? 1 : 0);
+
+  const large = fontSizePx >= 48;
 
   return (
-    <div className={styles.row}>
+    <div className={`${styles.row} ${large ? styles.rowLarge : styles.rowCompact}`}>
       <button
         type="button"
         className={styles.btn}
-        aria-label={`Diminuer de ${step}`}
+        aria-label={`Diminuer de ${stepLabel}`}
         onClick={() => onChange(clamp(value - step))}
       >
-        −{step}
+        −{stepLabel}
       </button>
       <span className={`${styles.value} tabular`} style={{ fontSize: fontSizePx }}>
         {display}
-        {unit ? <span className={styles.unit}>{unit}</span> : null}
+        {unit ? <span className={styles.unit}> {unit}</span> : null}
       </span>
       <button
         type="button"
         className={styles.btn}
-        aria-label={`Augmenter de ${step}`}
+        aria-label={`Augmenter de ${stepLabel}`}
         onClick={() => onChange(clamp(value + step))}
       >
-        +{step}
+        +{stepLabel}
       </button>
     </div>
   );

@@ -9,6 +9,8 @@ import pkg from '../../../package.json';
 export function SettingsScreen() {
   const [lastExportAt, setLastExportAt] = useState<string | undefined>();
   const [persisted, setPersisted] = useState<boolean | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -33,9 +35,14 @@ export function SettingsScreen() {
   };
 
   const handleImportFile = async (file: File, mode: 'replace' | 'merge') => {
-    const text = await file.text();
-    await importAll(text, mode);
-    window.location.reload();
+    setImporting(true);
+    try {
+      const text = await file.text();
+      await importAll(text, mode);
+      window.location.reload();
+    } finally {
+      setImporting(false);
+    }
   };
 
   const requestPersist = async () => {
@@ -47,65 +54,91 @@ export function SettingsScreen() {
 
   return (
     <div className={styles.screen}>
-      <h1 className={styles.title}>Réglages</h1>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Réglages</h1>
+      </header>
 
-      <div className={styles.card}>
-        <span>Programme</span>
+      <section className={styles.plate}>
+        <h2 className={styles.sectionTitle}>Programme</h2>
         <Link className={styles.link} to="/settings/program">
           Modifier le programme →
         </Link>
-      </div>
+      </section>
 
-      <div className={styles.card}>
+      <section className={styles.plate}>
+        <h2 className={styles.sectionTitle}>Application</h2>
         <div className={styles.row}>
           <span>Version</span>
-          <span>{pkg.version}</span>
+          <span className="tabular">{pkg.version}</span>
         </div>
         <div className={styles.row}>
           <span>Stockage persistant</span>
-          <span>{persisted == null ? '—' : persisted ? 'Oui' : 'Non'}</span>
+          <span>{persisted == null ? '—' : persisted ? 'Actif' : 'Inactif'}</span>
         </div>
         {persisted === false && (
           <BigButton variant="ghost" onClick={() => void requestPersist()}>
             Activer le stockage persistant
           </BigButton>
         )}
-      </div>
+      </section>
 
-      <div className={styles.card}>
+      <section className={styles.plate}>
+        <h2 className={styles.sectionTitle}>Sauvegarde</h2>
         <div className={styles.row}>
           <span>Dernier export</span>
-          <span className={isStale ? styles.warn : ''}>
+          <span className={isStale ? styles.warn : undefined}>
             {lastExportAt ? formatDateFr(lastExportAt.slice(0, 10)) : 'jamais'}
+            {isStale ? ' · à exporter' : ''}
           </span>
         </div>
         <BigButton variant="primary" onClick={() => void handleExport()}>
           Exporter mes données
         </BigButton>
-      </div>
+      </section>
 
-      <div className={styles.card}>
-        <span>Importer une sauvegarde</span>
+      <section className={styles.plate}>
+        <h2 className={styles.sectionTitle}>Import</h2>
+        <p className={styles.hint}>
+          Fichier JSON exporté depuis HERY. Remplacer écrase tout ; fusionner conserve les deux.
+        </p>
         <input
           ref={fileInputRef}
           type="file"
           accept="application/json"
-          style={{ display: 'none' }}
+          className={styles.fileInput}
           onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            const mode = window.confirm(
-              'OK = remplacer toutes les données actuelles. Annuler = fusionner avec les données actuelles.',
-            )
-              ? 'replace'
-              : 'merge';
-            void handleImportFile(file, mode);
+            const file = e.target.files?.[0] ?? null;
+            setPendingFile(file);
+            e.target.value = '';
           }}
         />
-        <BigButton variant="ghost" onClick={() => fileInputRef.current?.click()}>
-          Choisir un fichier
-        </BigButton>
-      </div>
+        {!pendingFile ? (
+          <BigButton variant="ghost" onClick={() => fileInputRef.current?.click()}>
+            Choisir un fichier
+          </BigButton>
+        ) : (
+          <div className={styles.importActions}>
+            <p className={styles.fileName}>{pendingFile.name}</p>
+            <BigButton
+              variant="primary"
+              disabled={importing}
+              onClick={() => void handleImportFile(pendingFile, 'merge')}
+            >
+              Fusionner
+            </BigButton>
+            <BigButton
+              variant="danger"
+              disabled={importing}
+              onClick={() => void handleImportFile(pendingFile, 'replace')}
+            >
+              Remplacer tout
+            </BigButton>
+            <BigButton variant="ghost" disabled={importing} onClick={() => setPendingFile(null)}>
+              Annuler
+            </BigButton>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

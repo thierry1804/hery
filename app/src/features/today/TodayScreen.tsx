@@ -11,6 +11,29 @@ import styles from './TodayScreen.module.css';
 
 const DAY_NAMES = ['', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 
+function formatPrescription(it: PrescribedItem): string {
+  if (it.sets && it.repsTarget != null) return `${it.sets}×${it.repsTarget}`;
+  if (it.sets && it.repsRangeMin != null && it.repsRangeMax != null) {
+    return `${it.sets}×${it.repsRangeMin}–${it.repsRangeMax}`;
+  }
+  if (it.durationSec != null) {
+    const min = Math.round(it.durationSec / 60);
+    return min > 0 ? `${min} min` : `${it.durationSec} s`;
+  }
+  if (it.sets) return `${it.sets} séries`;
+  return '';
+}
+
+function nextProgramDayLabel(templates: SessionTemplate[], fromDay: number): string | null {
+  if (templates.length === 0) return null;
+  for (let offset = 1; offset <= 7; offset++) {
+    const day = ((fromDay - 1 + offset) % 7) + 1;
+    const tpl = templates.find((t) => t.dayOfWeek === day);
+    if (tpl) return DAY_NAMES[day] ?? null;
+  }
+  return null;
+}
+
 export function TodayScreen() {
   const navigate = useNavigate();
   const [template, setTemplate] = useState<SessionTemplate | null | undefined>(undefined);
@@ -30,19 +53,28 @@ export function TodayScreen() {
 
   useEffect(() => {
     void (async () => {
+      const templates = await getAllTemplates();
+      setAllTemplates(templates);
       const tpl = await getTemplateForDay(dayOfWeekIso());
       if (tpl) {
         await loadTemplate(tpl);
       } else {
         setTemplate(null);
-        setAllTemplates(await getAllTemplates());
       }
       const r = await getResumableWorkout();
       setResumable(r);
     })();
   }, []);
 
-  if (template === undefined) return <div className={styles.screen} />;
+  if (template === undefined) {
+    return (
+      <div className={styles.screen} aria-busy="true">
+        <div className={styles.skeletonBlock} />
+        <div className={styles.skeletonBlock} />
+        <div className={styles.skeletonCta} />
+      </div>
+    );
+  }
 
   const handleStart = async (tpl: SessionTemplate, tplItems: PrescribedItem[]) => {
     const workout = await startWorkout(tpl, tplItems);
@@ -50,68 +82,101 @@ export function TodayScreen() {
   };
 
   if (template === null) {
+    const nextDay = nextProgramDayLabel(allTemplates, dayOfWeekIso());
     return (
       <div className={styles.screen}>
-        <div className={styles.empty}>Aucune séance aujourd'hui. La prochaine séance est un jour de programme.</div>
+        <header className={styles.header}>
+          <p className={styles.subtitle}>Aujourd&apos;hui — {DAY_NAMES[dayOfWeekIso()]}</p>
+          <h1 className={styles.title}>Repos</h1>
+          <p className={styles.empty}>
+            {resumable
+              ? 'Séance interrompue à reprendre.'
+              : nextDay
+                ? `Aucune séance. La prochaine est ${nextDay}.`
+                : "Aucune séance prévue aujourd'hui."}
+          </p>
+        </header>
+
         <TodayProgressCard />
-        {resumable ? (
-          <BigButton variant="primary" onClick={() => navigate(`/session/${resumable.id}`)}>
-            Reprendre la séance
-          </BigButton>
-        ) : (
-          <div className={styles.card}>
-            <p className={styles.subtitle}>Séance hors programme (test / rattrapage)</p>
-            {allTemplates.map((tpl) => (
-              <BigButton
-                key={tpl.id}
-                variant="ghost"
-                onClick={() =>
-                  void (async () => {
-                    const prescribed = await getPrescribedItems(tpl.id);
-                    await handleStart(tpl, prescribed);
-                  })()
-                }
-              >
-                {tpl.label}
-              </BigButton>
-            ))}
-          </div>
-        )}
+
+        <div className={styles.footer}>
+          {resumable ? (
+            <BigButton variant="primary" onClick={() => navigate(`/session/${resumable.id}`)}>
+              Reprendre la séance
+            </BigButton>
+          ) : (
+            <div className={styles.plate}>
+              <p className={styles.plateLabel}>Séance hors programme</p>
+              <div className={styles.templateList}>
+                {allTemplates.map((tpl) => (
+                  <BigButton
+                    key={tpl.id}
+                    variant="ghost"
+                    onClick={() =>
+                      void (async () => {
+                        const prescribed = await getPrescribedItems(tpl.id);
+                        await handleStart(tpl, prescribed);
+                      })()
+                    }
+                  >
+                    {tpl.label}
+                  </BigButton>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
   const strengthItems = items.filter((i) => i.kind === 'strength' || i.kind === 'core');
+  const supportKinds = items.filter((i) => i.kind === 'warmup' || i.kind === 'cardio' || i.kind === 'stretch');
+  const supportSummary = Array.from(new Set(supportKinds.map((i) => {
+    if (i.kind === 'warmup') return 'Échauffement';
+    if (i.kind === 'cardio') return 'Cardio';
+    return 'Étirements';
+  }))).join(' · ');
 
   return (
     <div className={styles.screen}>
-      <div>
-        <p className={styles.subtitle}>Aujourd'hui — {DAY_NAMES[dayOfWeekIso()]}</p>
+      <header className={styles.header}>
+        <p className={styles.subtitle}>Aujourd&apos;hui — {DAY_NAMES[dayOfWeekIso()]}</p>
         <h1 className={styles.title}>{template.label}</h1>
-      </div>
+        <p className={styles.meta}>
+          <span className="tabular">{strengthItems.length}</span> mouvements
+          <span className={styles.metaSep}>·</span>
+          ~<span className="tabular">{template.targetDurationMin}</span> min
+        </p>
+      </header>
 
-      <div className={styles.card}>
-        {strengthItems.map((it) => (
-          <div key={it.id} className={styles.itemRow}>
-            <span>{it.exerciseId ? exercisesById.get(it.exerciseId)?.name : it.label}</span>
-            <span className="tabular">
-              {it.sets ? `${it.sets}×${it.repsTarget ?? Math.round((it.durationSec ?? 0) / 60) + 'min'}` : ''}
-            </span>
-          </div>
-        ))}
+      <div className={styles.plate}>
+        {strengthItems.map((it) => {
+          const name = it.exerciseId ? exercisesById.get(it.exerciseId)?.name : it.label;
+          const prescription = formatPrescription(it);
+          return (
+            <div key={it.id} className={styles.itemRow}>
+              <span className={styles.itemName}>{name}</span>
+              {prescription ? <span className={`tabular ${styles.itemRx}`}>{prescription}</span> : null}
+            </div>
+          );
+        })}
+        {supportSummary ? <p className={styles.support}>{supportSummary}</p> : null}
       </div>
 
       <TodayProgressCard />
 
-      {resumable ? (
-        <BigButton variant="primary" onClick={() => navigate(`/session/${resumable.id}`)}>
-          Reprendre la séance
-        </BigButton>
-      ) : (
-        <BigButton variant="primary" onClick={() => void handleStart(template, items)}>
-          DÉMARRER
-        </BigButton>
-      )}
+      <div className={styles.footer}>
+        {resumable ? (
+          <BigButton variant="primary" onClick={() => navigate(`/session/${resumable.id}`)}>
+            Reprendre la séance
+          </BigButton>
+        ) : (
+          <BigButton variant="primary" onClick={() => void handleStart(template, items)}>
+            DÉMARRER
+          </BigButton>
+        )}
+      </div>
     </div>
   );
 }

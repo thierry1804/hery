@@ -1,33 +1,79 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
+  gap: 0;
+  padding: 0;
+  background: var(--fonte-700);
+  max-height: min(40dvh, 280px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
   align-items: center;
-  gap: var(--space-3);
-  min-height: 32px;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 6px var(--space-4);
   color: var(--fonte-300);
   font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
   font-weight: 700;
+  font-size: var(--fs-14);
+  flex: 0 0 auto;
 }
 
 .rowActive {
   color: var(--magnesie);
+  background: var(--fonte-500);
+  position: sticky;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
 }
 
 .rowActive .marker {
   color: var(--acier);
 }
 
-.marker {
-  width: 20px;
-  text-align: center;
+.rowDone {
+  color: var(--magnesie);
 }
 
-.done .value {
+.marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  min-height: 18px;
+}
+
+.label {
+  min-width: 0;
+}
+
+.value {
   color: var(--magnesie);
+  font-size: var(--fs-14);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pr {
+  color: var(--laiton);
+}
+
+.pending {
+  color: var(--fonte-300);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: var(--fs-12);
+  text-align: right;
+}
+
+.rowActive .pending {
+  color: var(--acier);
+  font-weight: 600;
 }

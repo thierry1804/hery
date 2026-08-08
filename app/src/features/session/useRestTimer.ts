@@ -1,47 +1,66 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { restEndFeedback } from '../../lib/haptics';
 
+export interface RestTimerState {
+  /** Secondes affichées (arrondi à la seconde). */
+  remainingSec: number;
+  /** Millisecondes restantes exactes, pour l'arc. */
+  remainingMs: number;
+}
+
 // RG-08: le decompte est pilote par un timestamp de fin persiste, jamais par setInterval seul.
-export function useRestTimer(restEndsAt: number | null, onComplete: () => void) {
-  const [remainingSec, setRemainingSec] = useState(0);
+export function useRestTimer(restEndsAt: number | null, onComplete: () => void): RestTimerState {
+  const [state, setState] = useState<RestTimerState>({ remainingSec: 0, remainingMs: 0 });
   const rafRef = useRef<number | null>(null);
   const firedRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   const tick = useCallback(() => {
     if (restEndsAt == null) {
-      setRemainingSec(0);
+      setState({ remainingSec: 0, remainingMs: 0 });
       return;
     }
-    const remaining = Math.max(0, Math.round((restEndsAt - Date.now()) / 1000));
-    setRemainingSec(remaining);
-    if (remaining <= 0) {
+
+    const remainingMs = Math.max(0, restEndsAt - Date.now());
+    const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+    setState({ remainingSec, remainingMs });
+
+    if (remainingMs <= 0) {
       if (!firedRef.current) {
         firedRef.current = true;
         restEndFeedback();
-        onComplete();
+        onCompleteRef.current();
       }
       return;
     }
+
     rafRef.current = requestAnimationFrame(tick);
-  }, [restEndsAt, onComplete]);
+  }, [restEndsAt]);
 
   useEffect(() => {
     firedRef.current = false;
+    if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+
     if (restEndsAt == null) {
-      setRemainingSec(0);
+      setState({ remainingSec: 0, remainingMs: 0 });
       return;
     }
+
     tick();
+
     const onVisible = () => {
-      if (document.visibilityState === 'visible') tick();
+      if (document.visibilityState === 'visible') {
+        if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+        tick();
+      }
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       document.removeEventListener('visibilitychange', onVisible);
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restEndsAt]);
+  }, [restEndsAt, tick]);
 
-  return remainingSec;
+  return state;
 }

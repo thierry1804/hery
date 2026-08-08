@@ -40,11 +40,19 @@
   flex: 1;
   align-self: stretch;
   display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--magnesie);
+  text-decoration: none;
+}
+
+.itemText {
+  min-width: 0;
+  flex: 1;
+  display: flex;
   flex-direction: column;
   justify-content: center;
   gap: var(--space-1);
-  color: var(--magnesie);
-  text-decoration: none;
 }
 
 .itemName {

@@ -3,6 +3,7 @@ import type { Exercise } from '../../db/schema';
 import { getAllExercises } from '../../repositories/exercises.repo';
 import { BigButton } from '../../ui/BigButton';
 import { Sheet } from '../../ui/Sheet';
+import { ExerciseIllustration } from '../../ui/exercise-illustrations/ExerciseIllustration';
 import styles from './ExercisePickerSheet.module.css';
 
 interface Props {
@@ -52,7 +53,12 @@ export function ExercisePickerSheet({ onClose, onPick }: Props) {
               key={exercise.id}
               onClick={() => onPick(exercise)}
             >
-              {exercise.name}
+              <ExerciseIllustration
+                variant="thumb"
+                exerciseId={exercise.id}
+                name={exercise.name}
+              />
+              <span className={styles.exerciseName}>{exercise.name}</span>
             </button>
           ))}
           {!error && filteredExercises.length === 0 && (

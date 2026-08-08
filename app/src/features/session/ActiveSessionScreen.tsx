@@ -13,10 +13,12 @@ import {
   updateWorkoutExercise,
 } from '../../repositories/workouts.repo';
 import { getExercisesByIds } from '../../repositories/exercises.repo';
+import { getTemplateById } from '../../repositories/program.repo';
 import { clearProgress, loadProgress, saveProgress } from '../../repositories/session-progress.repo';
 import { pickAlternatives } from '../../domain/substitution';
 import { BigButton } from '../../ui/BigButton';
 import { Stepper } from '../../ui/Stepper';
+import { ExerciseIllustration } from '../../ui/exercise-illustrations/ExerciseIllustration';
 import { RestOverlay } from './RestOverlay';
 import { SetInput } from './SetInput';
 import { SubstituteDialog } from './SubstituteDialog';
@@ -72,6 +74,7 @@ export function ActiveSessionScreen() {
   const [setIndex, setSetIndex] = useState(1);
   const [checkedOrders, setCheckedOrders] = useState<Set<number>>(new Set());
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
+  const [restTotalSec, setRestTotalSec] = useState(90);
   const [pendingAdvance, setPendingAdvance] = useState(false);
 
   const [currentExerciseId, setCurrentExerciseId] = useState<string | null>(null);
@@ -89,6 +92,7 @@ export function ActiveSessionScreen() {
   const [showSubstitute, setShowSubstitute] = useState(false);
   const [showNote, setShowNote] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [sessionLabel, setSessionLabel] = useState('Séance');
 
   useWakeLock(!finished);
 
@@ -105,6 +109,10 @@ export function ActiveSessionScreen() {
         return;
       }
       setWorkout(w);
+      if (w.sessionTemplateId) {
+        const tpl = await getTemplateById(w.sessionTemplateId);
+        if (tpl) setSessionLabel(tpl.label);
+      }
       const ids = Array.from(new Set(w.templateSnapshot.map((i) => i.exerciseId).filter((x): x is string => !!x)));
       const exs = await getExercisesByIds(ids);
       setExercisesById(new Map(exs.map((e) => [e.id, e])));
@@ -114,6 +122,10 @@ export function ActiveSessionScreen() {
       setSetIndex(progress.setIndex);
       setCheckedOrders(new Set(progress.checkedOrders));
       setRestEndsAt(progress.restEndsAt);
+      if (progress.restEndsAt != null) {
+        const remainingSec = Math.max(1, Math.ceil((progress.restEndsAt - Date.now()) / 1000));
+        setRestTotalSec(remainingSec);
+      }
       setPendingAdvance(progress.pendingAdvance);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -163,23 +175,57 @@ export function ActiveSessionScreen() {
         setLastSetsText('');
       }
 
+      const exercise = exercisesById.get(exId);
+      const isWeight = !exercise || exercise.loadType === 'weight';
+      const increment = exercise?.defaultIncrementKg && exercise.defaultIncrementKg > 0 ? exercise.defaultIncrementKg : 2.5;
+      const starterWeight = isWeight ? Math.max(increment * 8, 10) : 0;
+
       const existingAtIndex = sets.find((s) => s.index === setIndex);
       if (existingAtIndex) {
-        setWeightKg(existingAtIndex.weightKg ?? 0);
+        setWeightKg(existingAtIndex.weightKg ?? starterWeight);
         setReps(existingAtIndex.reps ?? step.item.repsTarget ?? 10);
       } else {
-        const refSet = last.find((s) => s.index === setIndex) ?? last[last.length - 1];
-        setWeightKg(refSet?.weightKg ?? 0);
+        const refSet =
+          last.find((s) => s.index === setIndex) ?? last[last.length - 1] ?? sets[sets.length - 1];
+        setWeightKg(refSet?.weightKg ?? starterWeight);
         setReps(refSet?.reps ?? step.item.repsTarget ?? 10);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itemIndex, step, workout]);
+  }, [itemIndex, setIndex, step, workout, currentExerciseId, exercisesById]);
 
   if (finished) return <FinishedView onDone={() => navigate('/')} />;
-  if (!workout || !step) return <div className={styles.screen} />;
+  if (!workout || !step) {
+    return (
+      <div className={styles.screen} aria-busy="true">
+        <div className={styles.topbar}>
+          <span className={styles.exit}>…</span>
+        </div>
+      </div>
+    );
+  }
 
   const totalSteps = steps.length;
+  const forceTotalSets = step.kind === 'exercise' ? (step.item.sets ?? 1) : 0;
+  const forceDenseHero = forceTotalSets >= 4;
+  const forceExerciseTitle =
+    step.kind === 'exercise'
+      ? ((currentExerciseId && exercisesById.get(currentExerciseId)?.name) ??
+        (step.item.exerciseId && exercisesById.get(step.item.exerciseId)?.name) ??
+        step.item.label)
+      : '';
+
+  const restNextHint = (() => {
+    if (!pendingAdvance) return `Série ${setIndex}`;
+    const next = steps[itemIndex + 1];
+    if (!next) return 'fin de séance';
+    if (next.kind === 'exercise') {
+      return exercisesById.get(next.item.exerciseId ?? '')?.name ?? next.item.label ?? 'exercice suivant';
+    }
+    if (next.kind === 'cardio') return 'Cardio';
+    if (next.kind === 'warmup') return 'Échauffement';
+    return 'Étirements';
+  })();
 
   const goToNextStep = () => {
     setCurrentExerciseId(null);
@@ -223,7 +269,9 @@ export function ActiveSessionScreen() {
 
     const totalSets = step.item.sets ?? 1;
     const isLastSet = setIndex >= totalSets;
-    const endsAt = Date.now() + step.item.restSec * 1000;
+    const restSec = step.item.restSec;
+    const endsAt = Date.now() + restSec * 1000;
+    setRestTotalSec(restSec);
     setRestEndsAt(endsAt);
 
     if (isLastSet) {
@@ -256,6 +304,7 @@ export function ActiveSessionScreen() {
 
   const extendRest = (extraSec: number) => {
     const endsAt = (restEndsAt ?? Date.now()) + extraSec * 1000;
+    setRestTotalSec((n) => n + extraSec);
     setRestEndsAt(endsAt);
     persist({ restEndsAt: endsAt });
   };
@@ -263,10 +312,10 @@ export function ActiveSessionScreen() {
   return (
     <div className={styles.screen}>
       <div className={styles.topbar}>
-        <button className={styles.exit} onClick={() => navigate('/')}>
-          ← Séance {workout.sessionTemplateId ? '' : ''}
+        <button type="button" className={styles.exit} onClick={() => navigate('/')}>
+          ← {sessionLabel}
         </button>
-        <span className="tabular">
+        <span className={`tabular ${styles.progress}`}>
           {itemIndex + 1} / {totalSteps}
         </span>
       </div>
@@ -277,16 +326,21 @@ export function ActiveSessionScreen() {
             <h1 className={styles.exerciseName}>{step.kind === 'warmup' ? 'Échauffement' : 'Étirements'}</h1>
           </div>
           <div className={styles.checklist}>
-            {step.items.map((it) => (
-              <div
-                key={it.id}
-                className={`${styles.checkItem} ${checkedOrders.has(it.order) ? styles.checkItemDone : ''}`}
-                onClick={() => toggleCheck(it.order)}
-              >
-                <span>{checkedOrders.has(it.order) ? '✓' : '○'}</span>
-                <span>{it.label}</span>
-              </div>
-            ))}
+            {step.items.map((it) => {
+              const done = checkedOrders.has(it.order);
+              return (
+                <button
+                  key={it.id}
+                  type="button"
+                  className={`${styles.checkItem} ${done ? styles.checkItemDone : ''}`}
+                  aria-pressed={done}
+                  onClick={() => toggleCheck(it.order)}
+                >
+                  <span aria-hidden="true">{done ? '✓' : '○'}</span>
+                  <span>{it.label}</span>
+                </button>
+              );
+            })}
           </div>
           <div className={styles.inputZone}>
             <BigButton variant="primary" onClick={goToNextStep}>
@@ -313,34 +367,64 @@ export function ActiveSessionScreen() {
         />
       ) : (
         <>
-          <div className={styles.header}>
-            <h1 className={styles.exerciseName}>
-              {(currentExerciseId && exercisesById.get(currentExerciseId)?.name) ?? '…'}
-            </h1>
-            {lastSetsText && <p className={styles.lastTime}>Dernière fois : {lastSetsText}</p>}
-            {machineSettings && <p className={styles.machineSettings}>{machineSettings}</p>}
+          <div className={`${styles.hero} ${forceDenseHero ? styles.heroDense : ''}`}>
+            <ExerciseIllustration
+              variant={forceDenseHero ? 'heroDense' : 'hero'}
+              exerciseId={currentExerciseId ?? step.item.exerciseId}
+              name={forceExerciseTitle}
+            />
+            <div className={styles.heroScrim}>
+              <h1 className={styles.exerciseName}>{forceExerciseTitle}</h1>
+              <div className={styles.metaRow}>
+                <p className={styles.lastTime}>
+                  {lastSetsText ? `Dernière fois : ${lastSetsText}` : 'Première saisie'}
+                </p>
+                {machineSettings ? <p className={styles.machineSettings}>{machineSettings}</p> : null}
+                <span className={`tabular ${styles.setBadge}`}>
+                  Série {setIndex}/{forceTotalSets}
+                </span>
+              </div>
+            </div>
           </div>
 
           <div className={styles.setList}>
             <SetInput
               loggedSets={loggedSets}
-              totalSets={step.item.sets ?? 1}
+              totalSets={forceTotalSets}
               activeIndex={setIndex}
-              unilateral={currentExerciseId ? (exercisesById.get(currentExerciseId)?.unilateral ?? false) : false}
+              unilateral={
+                currentExerciseId ? (exercisesById.get(currentExerciseId)?.unilateral ?? false) : false
+              }
             />
           </div>
 
-          <div className={styles.inputZone}>
-            {exercisesById.get(currentExerciseId ?? '')?.loadType !== 'time' && (
+          <div className={styles.controls}>
+            {exercisesById.get(currentExerciseId ?? '')?.loadType !== 'time' ? (
               <>
                 <div className={styles.weightRow}>
-                  <Stepper value={weightKg} step={2.5} unit="kg" fontSizePx={72} decimals={1} onChange={setWeightKg} />
+                  <Stepper
+                    value={weightKg}
+                    step={Math.max(exercisesById.get(currentExerciseId ?? '')?.defaultIncrementKg ?? 2.5, 1.25)}
+                    unit="kg"
+                    fontSizePx={72}
+                    decimals={1}
+                    onChange={setWeightKg}
+                  />
                 </div>
                 <div className={styles.repsRow}>
-                  <Stepper value={reps} step={1} min={1} unit="reps" fontSizePx={28} onChange={setReps} />
+                  <Stepper value={reps} step={1} unit="reps" fontSizePx={28} onChange={setReps} />
                 </div>
               </>
+            ) : (
+              <p className={styles.timeHint}>
+                {step.item.durationSec != null
+                  ? `Tenir ${step.item.durationSec} s`
+                  : 'Série au temps'}
+              </p>
             )}
+          </div>
+
+          <div className={styles.actions}>
             <BigButton variant="primary" onClick={() => void handleValidate()}>
               VALIDER
             </BigButton>
@@ -351,28 +435,36 @@ export function ActiveSessionScreen() {
               <BigButton variant="ghost" onClick={() => setShowNote(true)}>
                 Noter
               </BigButton>
-              {loggedSets.length > 0 && (
-                <BigButton
-                  variant="ghost"
-                  onClick={() =>
-                    void (async () => {
-                      const last = loggedSets[loggedSets.length - 1]!;
-                      await removeSet(last.id);
-                      if (workoutExerciseId) setLoggedSets(await getSetLogs(workoutExerciseId));
-                      setSetIndex((n) => Math.max(1, n - 1));
-                    })()
-                  }
-                >
-                  Annuler série
-                </BigButton>
-              )}
             </div>
+            {loggedSets.length > 0 && (
+              <button
+                type="button"
+                className={styles.undoSet}
+                onClick={() =>
+                  void (async () => {
+                    const last = loggedSets[loggedSets.length - 1]!;
+                    await removeSet(last.id);
+                    if (workoutExerciseId) setLoggedSets(await getSetLogs(workoutExerciseId));
+                    setSetIndex((n) => Math.max(1, n - 1));
+                  })()
+                }
+              >
+                Annuler la dernière série
+              </button>
+            )}
           </div>
         </>
       )}
 
       {restEndsAt != null && (
-        <RestOverlay restEndsAt={restEndsAt} onExtend={extendRest} onSkip={finishRest} onComplete={finishRest} />
+        <RestOverlay
+          restEndsAt={restEndsAt}
+          totalSec={restTotalSec}
+          nextHint={restNextHint}
+          onExtend={extendRest}
+          onSkip={finishRest}
+          onComplete={finishRest}
+        />
       )}
 
       {showSubstitute && currentExerciseId && (
@@ -416,14 +508,34 @@ function CardioBlock({
   onFinish: () => void;
 }) {
   const minutes = Math.round((item.durationSec ?? 0) / 60);
+  const modalityExerciseId =
+    modality === 'velo'
+      ? 'ex-velo'
+      : modality === 'rameur'
+        ? 'ex-rameur'
+        : modality === 'marche_inclinee'
+          ? 'ex-marche-inclinee'
+          : modality === 'elliptique'
+            ? 'ex-elliptique'
+            : 'ex-tapis';
   return (
     <div className={styles.cardioBlock}>
-      <h1 className={styles.exerciseName}>Cardio — {minutes} min</h1>
-      <p className={styles.lastTime}>FC cible 110-130 bpm</p>
+      <div className={styles.cardioHero}>
+        <ExerciseIllustration
+          variant="hero"
+          exerciseId={item.exerciseId ?? modalityExerciseId}
+          name="Cardio"
+        />
+        <div className={styles.heroScrim}>
+          <h1 className={styles.exerciseName}>Cardio — {minutes} min</h1>
+          <p className={styles.lastTime}>FC cible 110-130 bpm</p>
+        </div>
+      </div>
       <div className={styles.modalityRow}>
         {CARDIO_MODALITIES.map((m) => (
           <button
             key={m}
+            type="button"
             className={`${styles.modalityBtn} ${modality === m ? styles.modalityBtnActive : ''}`}
             onClick={() => onModalityChange(m)}
           >
@@ -431,9 +543,11 @@ function CardioBlock({
           </button>
         ))}
       </div>
-      <BigButton variant="primary" onClick={onFinish}>
-        Terminé
-      </BigButton>
+      <div className={styles.cardioActions}>
+        <BigButton variant="primary" onClick={onFinish}>
+          Terminé
+        </BigButton>
+      </div>
     </div>
   );
 }
@@ -443,8 +557,9 @@ function FinishedView({ onDone }: { onDone: () => void }) {
     <div className={styles.screen}>
       <div className={styles.finished}>
         <h1 className={styles.exerciseName}>Séance terminée</h1>
+        <p className={styles.lastTime}>Enregistrée sur cet appareil.</p>
         <BigButton variant="primary" onClick={onDone}>
-          Retour à l'accueil
+          Retour à l&apos;accueil
         </BigButton>
       </div>
     </div>
