@@ -134,9 +134,19 @@ export function ItemEditScreen() {
               ? form.durationSec
               : null
             : null,
-      restSec: form.kind === 'strength' || form.kind === 'core' ? form.restSec : 0,
+      restSec:
+        form.kind === 'strength' || form.kind === 'core' || form.kind === 'cardio'
+          ? form.restSec
+          : 0,
     };
 
+    if (
+      (payload.kind === 'strength' || payload.kind === 'core') &&
+      payload.exerciseId == null
+    ) {
+      setError('Sélectionnez un exercice dans la liste.');
+      return;
+    }
     if (!payload.label) {
       setError('Le nom est requis.');
       return;
@@ -207,7 +217,7 @@ export function ItemEditScreen() {
               </select>
             </label>
 
-            {(form.kind === 'strength' || form.kind === 'core') && (
+            {(form.kind === 'strength' || form.kind === 'core' || form.kind === 'cardio') && (
               <button
                 type="button"
                 className={styles.pickerButton}
@@ -320,6 +330,20 @@ export function ItemEditScreen() {
                   Par côté
                 </label>
               </>
+            )}
+
+            {form.kind === 'cardio' && (
+              <div className={styles.field}>
+                <span>Repos</span>
+                <Stepper
+                  value={form.restSec}
+                  step={15}
+                  min={0}
+                  unit="s"
+                  fontSizePx={28}
+                  onChange={(restSec) => setForm((current) => ({ ...current, restSec }))}
+                />
+              </div>
             )}
 
             {(form.kind === 'cardio' ||

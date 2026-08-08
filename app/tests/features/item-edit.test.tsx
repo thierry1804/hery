@@ -43,6 +43,28 @@ function renderScreen(path: string) {
 }
 
 describe("édition d'un élément de programme", () => {
+  it.each([
+    ['strength', 'Musculation'],
+    ['core', 'Gainage'],
+  ] as const)(
+    "refuse d'enregistrer un élément %s sans exercice sélectionné",
+    async (kind, kindLabel) => {
+      renderScreen('/settings/program/template-a/items/new');
+
+      await screen.findByRole('button', { name: 'Choisir un exercice' });
+      if (kind !== 'strength') {
+        fireEvent.change(screen.getByLabelText('Type'), { target: { value: kind } });
+      }
+      fireEvent.change(screen.getByLabelText('Nom'), { target: { value: kindLabel } });
+      fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Sélectionnez un exercice dans la liste.',
+      );
+      expect(createPrescribedItem).not.toHaveBeenCalled();
+    },
+  );
+
   it("sélectionne un exercice puis crée l'élément", async () => {
     renderScreen('/settings/program/template-a/items/new');
 
@@ -68,6 +90,30 @@ describe("édition d'un élément de programme", () => {
       ),
     );
     expect(await screen.findByText('Retour séance')).toBeInTheDocument();
+  });
+
+  it('sélectionne un exercice cardio et conserve le repos choisi', async () => {
+    renderScreen('/settings/program/template-a/items/new');
+
+    await screen.findByRole('button', { name: 'Choisir un exercice' });
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'cardio' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Choisir un exercice' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Presse à cuisses' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Augmenter de 15' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    await waitFor(() =>
+      expect(createPrescribedItem).toHaveBeenCalledWith(
+        'template-a',
+        expect.objectContaining({
+          kind: 'cardio',
+          exerciseId: 'exercise-1',
+          label: 'Presse à cuisses',
+          durationSec: 600,
+          restSec: 15,
+        }),
+      ),
+    );
   });
 
   it("charge et met à jour un élément existant", async () => {
