@@ -1,0 +1,35 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--fonte-500);
+}
+
+.name {
+  color: var(--magnesie);
+  font-weight: 700;
+}
+
+.value {
+  color: var(--fonte-300);
+  font-size: var(--fs-14);
+}
+
+.record {
+  grid-column: 1 / -1;
+  color: var(--laiton);
+  font-size: var(--fs-12);
+}
+
+.empty {
+  margin: 0;
+  color: var(--fonte-300);
+  font-size: var(--fs-14);
+}

@@ -1,0 +1,33 @@
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.label,
+.value {
+  color: var(--fonte-300);
+  font-size: var(--fs-12);
+}
+
+.value {
+  text-align: right;
+}
+
+.track {
+  height: 8px;
+  background: var(--fonte-500);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  background: var(--magnesie);
+}
