@@ -64,6 +64,18 @@ describe('formatPrescription', () => {
     ).toBe('45 s · 30 s');
   });
 
+  it('formate les séries de gainage avec durée', () => {
+    expect(
+      formatPrescription({
+        ...baseItem,
+        kind: 'core',
+        repsTarget: null,
+        durationSec: 45,
+        restSec: 30,
+      }),
+    ).toBe('3×45 s · 30 s');
+  });
+
   it("n'affiche pas le repos d'un échauffement", () => {
     expect(
       formatPrescription({

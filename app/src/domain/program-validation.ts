@@ -40,6 +40,7 @@ function validateStrengthOrCore(input: ItemPatchInput): ValidationResult {
   const hasTarget = input.repsTarget != null;
   const hasRangeMin = input.repsRangeMin != null;
   const hasRangeMax = input.repsRangeMax != null;
+  const hasDuration = input.durationSec != null && input.durationSec > 0;
 
   if (hasTarget && (hasRangeMin || hasRangeMax)) {
     return err('repsTarget and reps range cannot both be set');
@@ -56,7 +57,11 @@ function validateStrengthOrCore(input: ItemPatchInput): ValidationResult {
     return ok;
   }
 
-  return err('repsTarget or reps range (min and max) is required');
+  if (hasDuration) {
+    return ok;
+  }
+
+  return err('repsTarget, reps range (min and max), or durationSec is required');
 }
 
 function validateCardio(input: ItemPatchInput): ValidationResult {

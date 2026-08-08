@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import type { ItemKind, PrescribedItem } from '../../db/schema';
+import type { Exercise, ItemKind, PrescribedItem } from '../../db/schema';
 import { validateItemPatch } from '../../domain/program-validation';
+import { getAllExercises } from '../../repositories/exercises.repo';
 import {
   createPrescribedItem,
   getPrescribedItems,
@@ -30,6 +31,8 @@ type EditableItem = Pick<
   | 'perSide'
   | 'notes'
 >;
+
+type PrescriptionMode = 'target' | 'range' | 'duration';
 
 const KIND_LABELS: Record<ItemKind, string> = {
   strength: 'Musculation',
@@ -61,7 +64,8 @@ export function ItemEditScreen() {
   const { templateId = '', itemId } = useParams();
   const navigate = useNavigate();
   const [form, setForm] = useState<EditableItem>(() => defaultItem());
-  const [repsMode, setRepsMode] = useState<'target' | 'range'>('target');
+  const [prescriptionMode, setPrescriptionMode] = useState<PrescriptionMode>('target');
+  const [exerciseNames, setExerciseNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState('');
@@ -73,17 +77,32 @@ export function ItemEditScreen() {
       setLoading(true);
       setError('');
       try {
-        const items = await getPrescribedItems(templateId);
+        const [items, exercises] = await Promise.all([getPrescribedItems(templateId), getAllExercises()]);
+        const names = Object.fromEntries(exercises.map((exercise: Exercise) => [exercise.id, exercise.name]));
+        setExerciseNames(names);
         if (itemId) {
           const item = items.find((candidate) => candidate.id === itemId);
           if (!item) {
             setMissing(true);
             return;
           }
-          setForm(item);
-          setRepsMode(item.repsTarget == null ? 'range' : 'target');
+          const exerciseName = item.exerciseId ? names[item.exerciseId] : undefined;
+          setForm({
+            ...item,
+            label: item.label.trim() || exerciseName || '',
+          });
+          setPrescriptionMode(
+            item.kind === 'core' && item.durationSec != null && item.durationSec > 0
+              ? 'duration'
+              : item.repsTarget == null
+                ? 'range'
+                : 'target',
+          );
         } else {
-          const nextOrder = items.reduce((maximum, item) => Math.max(maximum, item.order), 0) + 10;
+          const nextOrder =
+            items
+              .filter((item) => item.order < 1000)
+              .reduce((maximum, item) => Math.max(maximum, item.order), 0) + 10;
           setForm(defaultItem('strength', nextOrder));
         }
       } catch {
@@ -96,54 +115,52 @@ export function ItemEditScreen() {
 
   const setKind = (kind: ItemKind) => {
     setForm((current) => defaultItem(kind, current.order));
-    setRepsMode('target');
+    setPrescriptionMode('target');
   };
 
-  const setRepetitionMode = (mode: 'target' | 'range') => {
-    setRepsMode(mode);
+  const setMode = (mode: PrescriptionMode) => {
+    setPrescriptionMode(mode);
     setForm((current) => ({
       ...current,
       repsTarget: mode === 'target' ? (current.repsTarget ?? 8) : null,
       repsRangeMin: mode === 'range' ? (current.repsRangeMin ?? 8) : null,
       repsRangeMax: mode === 'range' ? (current.repsRangeMax ?? 12) : null,
+      durationSec: mode === 'duration' ? (current.durationSec ?? 30) : null,
     }));
   };
 
   const save = async () => {
+    const exerciseName = form.exerciseId ? exerciseNames[form.exerciseId] : undefined;
     const payload: EditableItem = {
       ...form,
-      label: form.label.trim(),
+      label: form.label.trim() || exerciseName || '',
       sets: form.kind === 'strength' || form.kind === 'core' ? form.sets : null,
       repsTarget:
-        (form.kind === 'strength' || form.kind === 'core') && repsMode === 'target'
+        (form.kind === 'strength' || form.kind === 'core') && prescriptionMode === 'target'
           ? form.repsTarget
           : null,
       repsRangeMin:
-        (form.kind === 'strength' || form.kind === 'core') && repsMode === 'range'
+        (form.kind === 'strength' || form.kind === 'core') && prescriptionMode === 'range'
           ? form.repsRangeMin
           : null,
       repsRangeMax:
-        (form.kind === 'strength' || form.kind === 'core') && repsMode === 'range'
+        (form.kind === 'strength' || form.kind === 'core') && prescriptionMode === 'range'
           ? form.repsRangeMax
           : null,
       durationSec:
         form.kind === 'cardio'
           ? form.durationSec
-          : form.kind === 'warmup' || form.kind === 'stretch'
-            ? form.durationSec && form.durationSec > 0
-              ? form.durationSec
-              : null
-            : null,
-      restSec:
-        form.kind === 'strength' || form.kind === 'core' || form.kind === 'cardio'
-          ? form.restSec
-          : 0,
+          : form.kind === 'core' && prescriptionMode === 'duration'
+            ? form.durationSec
+            : form.kind === 'warmup' || form.kind === 'stretch'
+              ? form.durationSec && form.durationSec > 0
+                ? form.durationSec
+                : null
+              : null,
+      restSec: form.kind === 'strength' || form.kind === 'core' || form.kind === 'cardio' ? form.restSec : 0,
     };
 
-    if (
-      (payload.kind === 'strength' || payload.kind === 'core') &&
-      payload.exerciseId == null
-    ) {
+    if ((payload.kind === 'strength' || payload.kind === 'core') && payload.exerciseId == null) {
       setError('Sélectionnez un exercice dans la liste.');
       return;
     }
@@ -218,12 +235,8 @@ export function ItemEditScreen() {
             </label>
 
             {(form.kind === 'strength' || form.kind === 'core' || form.kind === 'cardio') && (
-              <button
-                type="button"
-                className={styles.pickerButton}
-                onClick={() => setShowPicker(true)}
-              >
-                {form.exerciseId ? form.label : 'Choisir un exercice'}
+              <button type="button" className={styles.pickerButton} onClick={() => setShowPicker(true)}>
+                {form.exerciseId ? exerciseNames[form.exerciseId] || form.label : 'Choisir un exercice'}
               </button>
             )}
 
@@ -232,9 +245,7 @@ export function ItemEditScreen() {
               <input
                 className={styles.input}
                 value={form.label}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, label: event.target.value }))
-                }
+                onChange={(event) => setForm((current) => ({ ...current, label: event.target.value }))}
               />
             </label>
 
@@ -252,20 +263,19 @@ export function ItemEditScreen() {
                 </div>
 
                 <label className={styles.field}>
-                  Répétitions
+                  Prescription
                   <select
                     className={styles.input}
-                    value={repsMode}
-                    onChange={(event) =>
-                      setRepetitionMode(event.target.value as 'target' | 'range')
-                    }
+                    value={prescriptionMode}
+                    onChange={(event) => setMode(event.target.value as PrescriptionMode)}
                   >
                     <option value="target">Cible</option>
                     <option value="range">Fourchette</option>
+                    {form.kind === 'core' && <option value="duration">Durée</option>}
                   </select>
                 </label>
 
-                {repsMode === 'target' ? (
+                {prescriptionMode === 'target' ? (
                   <div className={styles.field}>
                     <span>Répétitions cibles</span>
                     <Stepper
@@ -273,12 +283,10 @@ export function ItemEditScreen() {
                       step={1}
                       min={1}
                       fontSizePx={28}
-                      onChange={(repsTarget) =>
-                        setForm((current) => ({ ...current, repsTarget }))
-                      }
+                      onChange={(repsTarget) => setForm((current) => ({ ...current, repsTarget }))}
                     />
                   </div>
-                ) : (
+                ) : prescriptionMode === 'range' ? (
                   <div className={styles.range}>
                     <div className={styles.field}>
                       <span>Minimum</span>
@@ -287,9 +295,7 @@ export function ItemEditScreen() {
                         step={1}
                         min={1}
                         fontSizePx={24}
-                        onChange={(repsRangeMin) =>
-                          setForm((current) => ({ ...current, repsRangeMin }))
-                        }
+                        onChange={(repsRangeMin) => setForm((current) => ({ ...current, repsRangeMin }))}
                       />
                     </div>
                     <div className={styles.field}>
@@ -299,11 +305,21 @@ export function ItemEditScreen() {
                         step={1}
                         min={1}
                         fontSizePx={24}
-                        onChange={(repsRangeMax) =>
-                          setForm((current) => ({ ...current, repsRangeMax }))
-                        }
+                        onChange={(repsRangeMax) => setForm((current) => ({ ...current, repsRangeMax }))}
                       />
                     </div>
+                  </div>
+                ) : (
+                  <div className={styles.field}>
+                    <span>Durée</span>
+                    <Stepper
+                      value={form.durationSec ?? 30}
+                      step={5}
+                      min={5}
+                      unit="s"
+                      fontSizePx={28}
+                      onChange={(durationSec) => setForm((current) => ({ ...current, durationSec }))}
+                    />
                   </div>
                 )}
 
@@ -346,9 +362,7 @@ export function ItemEditScreen() {
               </div>
             )}
 
-            {(form.kind === 'cardio' ||
-              form.kind === 'warmup' ||
-              form.kind === 'stretch') && (
+            {(form.kind === 'cardio' || form.kind === 'warmup' || form.kind === 'stretch') && (
               <div className={styles.field}>
                 <span>Durée</span>
                 <Stepper
@@ -357,9 +371,7 @@ export function ItemEditScreen() {
                   min={form.kind === 'cardio' ? 1 : 0}
                   unit="min"
                   fontSizePx={28}
-                  onChange={(minutes) =>
-                    setForm((current) => ({ ...current, durationSec: minutes * 60 }))
-                  }
+                  onChange={(minutes) => setForm((current) => ({ ...current, durationSec: minutes * 60 }))}
                 />
               </div>
             )}
@@ -370,9 +382,7 @@ export function ItemEditScreen() {
                 className={styles.textarea}
                 value={form.notes}
                 rows={3}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, notes: event.target.value }))
-                }
+                onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
               />
             </label>
 

@@ -39,6 +39,32 @@ describe('validateItemPatch', () => {
       }).ok,
     ).toBe(false);
   });
+  it('accepts core with sets and duration', () => {
+    expect(
+      validateItemPatch({
+        kind: 'core',
+        sets: 3,
+        repsTarget: null,
+        repsRangeMin: null,
+        repsRangeMax: null,
+        durationSec: 45,
+        restSec: 30,
+      }).ok,
+    ).toBe(true);
+  });
+  it('rejects core without repetitions or duration', () => {
+    expect(
+      validateItemPatch({
+        kind: 'core',
+        sets: 3,
+        repsTarget: null,
+        repsRangeMin: null,
+        repsRangeMax: null,
+        durationSec: null,
+        restSec: 30,
+      }).ok,
+    ).toBe(false);
+  });
   it('rejects negative rest', () => {
     expect(
       validateItemPatch({
