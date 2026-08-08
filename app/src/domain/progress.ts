@@ -42,6 +42,16 @@ export interface LiftRow {
   deltaKg: number | null;
 }
 
+export interface ExerciseSessionLift {
+  workoutDate: string;
+  workoutId: string;
+  maxWeightKg: number;
+  repsAtMax: number;
+  tonnageKg: number;
+  hadPr: boolean;
+  latestPrAt: string | null;
+}
+
 export interface ProgressSnapshot {
   hasAnyCompletedWorkout: boolean;
   week: WeekStats;
@@ -120,4 +130,105 @@ export function buildWeekBars(
       .reduce((s, w) => s + w.totalTonnageKg, 0);
     return { weekStart, tonnageKg };
   });
+}
+
+const MS_14 = 14 * 24 * 60 * 60 * 1000;
+const MS_90 = 90 * 24 * 60 * 60 * 1000;
+
+function sessionDateMs(dateStr: string): number {
+  return new Date(`${dateStr}T12:00:00.000Z`).getTime();
+}
+
+function computeHasRecentPr(sessions: ExerciseSessionLift[], now: Date): boolean {
+  const nowMs = now.getTime();
+  if (
+    sessions.some(
+      (s) => s.latestPrAt != null && nowMs - new Date(s.latestPrAt).getTime() <= MS_14,
+    )
+  ) {
+    return true;
+  }
+  const last = sessions[sessions.length - 1];
+  if (last?.hadPr && nowMs - sessionDateMs(last.workoutDate) <= MS_14) {
+    return true;
+  }
+  return false;
+}
+
+export function selectMovers(
+  rows: { exerciseId: string; name: string; sessions: ExerciseSessionLift[] }[],
+  now: Date,
+  limit = 3,
+): Mover[] {
+  const candidates = rows
+    .filter((row) => row.sessions.length >= 2)
+    .map((row) => {
+      const prev = row.sessions[row.sessions.length - 2]!;
+      const curr = row.sessions[row.sessions.length - 1]!;
+      const prevMaxKg = prev.maxWeightKg;
+      const currMaxKg = curr.maxWeightKg;
+      const deltaKg = currMaxKg - prevMaxKg;
+      const hasRecentPr = computeHasRecentPr(row.sessions, now);
+      return {
+        exerciseId: row.exerciseId,
+        name: row.name,
+        prevMaxKg,
+        currMaxKg,
+        deltaKg,
+        hasRecentPr,
+        relativeDelta: prevMaxKg > 0 ? Math.abs(deltaKg) / prevMaxKg : 0,
+        currTonnageKg: curr.tonnageKg,
+      };
+    })
+    .filter((m) => m.deltaKg !== 0 || m.hasRecentPr);
+
+  candidates.sort((a, b) => {
+    if (a.hasRecentPr !== b.hasRecentPr) return a.hasRecentPr ? -1 : 1;
+    if (a.relativeDelta !== b.relativeDelta) return b.relativeDelta - a.relativeDelta;
+    return b.currTonnageKg - a.currTonnageKg;
+  });
+
+  return candidates.slice(0, limit).map((c) => ({
+    exerciseId: c.exerciseId,
+    name: c.name,
+    prevMaxKg: c.prevMaxKg,
+    currMaxKg: c.currMaxKg,
+    deltaKg: c.deltaKg,
+    hasRecentPr: c.hasRecentPr,
+  }));
+}
+
+export function buildLifts(
+  rows: { exerciseId: string; name: string; sessions: ExerciseSessionLift[] }[],
+): LiftRow[] {
+  return rows.map((row) => {
+    const curr = row.sessions[row.sessions.length - 1]!;
+    if (row.sessions.length < 2) {
+      return {
+        exerciseId: row.exerciseId,
+        name: row.name,
+        lastWeightKg: curr.maxWeightKg,
+        lastReps: curr.repsAtMax,
+        prevMaxKg: null,
+        deltaKg: null,
+      };
+    }
+    const prev = row.sessions[row.sessions.length - 2]!;
+    return {
+      exerciseId: row.exerciseId,
+      name: row.name,
+      lastWeightKg: curr.maxWeightKg,
+      lastReps: curr.repsAtMax,
+      prevMaxKg: prev.maxWeightKg,
+      deltaKg: curr.maxWeightKg - prev.maxWeightKg,
+    };
+  });
+}
+
+export function selectRecentPrs(prs: RecentPr[], now: Date, limit = 10): RecentPr[] {
+  const cutoff = now.getTime() - MS_90;
+  return prs
+    .filter((p) => new Date(p.completedAt).getTime() >= cutoff)
+    .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
+    .slice(0, limit);
 }
