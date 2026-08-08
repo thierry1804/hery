@@ -2,6 +2,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { authRoutes } from './auth';
+import { syncRoutes } from './sync';
 
 const app = new Hono();
 
@@ -18,6 +19,7 @@ app.use(
 
 app.get('/health', (c) => c.json({ ok: true }));
 app.route('/auth', authRoutes);
+app.route('/sync', syncRoutes);
 
 const port = Number(process.env.PORT ?? 8787);
 
