@@ -40,12 +40,18 @@ const SRC: Record<IllustrationKey, string> = {
 
 export function ExerciseIllustration({ exerciseId, name, variant, compact }: Props) {
   const key = illustrationKeyFor(exerciseId);
-  const label = name ? `Illustration : ${name}` : 'Illustration exercice';
   const mode = variant ?? (compact ? 'compact' : 'hero');
+  // thumb/compact : image décorative à côté du libellé (évite de polluer le nom accessible)
+  const alt =
+    mode === 'thumb' || mode === 'compact'
+      ? ''
+      : name
+        ? `Illustration : ${name}`
+        : 'Illustration exercice';
 
   return (
     <div className={`${styles.wrap} ${styles[mode]}`}>
-      <img className={styles.image} src={SRC[key]} alt={label} decoding="async" />
+      <img className={styles.image} src={SRC[key]} alt={alt} decoding="async" />
     </div>
   );
 }
