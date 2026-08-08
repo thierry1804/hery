@@ -6,6 +6,7 @@ import { getExercisesByIds } from '../../repositories/exercises.repo';
 import { getResumableWorkout, startWorkout } from '../../repositories/workouts.repo';
 import { dayOfWeekIso } from '../../lib/date';
 import { BigButton } from '../../ui/BigButton';
+import { TodayProgressCard } from '../progress/TodayProgressCard';
 import styles from './TodayScreen.module.css';
 
 const DAY_NAMES = ['', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
@@ -52,6 +53,7 @@ export function TodayScreen() {
     return (
       <div className={styles.screen}>
         <div className={styles.empty}>Aucune séance aujourd'hui. La prochaine séance est un jour de programme.</div>
+        <TodayProgressCard />
         {resumable ? (
           <BigButton variant="primary" onClick={() => navigate(`/session/${resumable.id}`)}>
             Reprendre la séance
@@ -98,6 +100,8 @@ export function TodayScreen() {
           </div>
         ))}
       </div>
+
+      <TodayProgressCard />
 
       {resumable ? (
         <BigButton variant="primary" onClick={() => navigate(`/session/${resumable.id}`)}>

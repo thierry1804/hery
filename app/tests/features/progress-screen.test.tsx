@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import App from '../../src/App';
 import { LiftsList } from '../../src/features/progress/LiftsList';
 import { RecentPrsList } from '../../src/features/progress/RecentPrsList';
+import { TodayProgressCard } from '../../src/features/progress/TodayProgressCard';
 import { WeekTonnageBars } from '../../src/features/progress/WeekTonnageBars';
 import { getProgressSnapshot } from '../../src/repositories/progress.repo';
 
@@ -12,6 +13,61 @@ vi.mock('../../src/repositories/progress.repo', () => ({
 }));
 
 describe('progress components', () => {
+  it('shows the Today empty state after loading a snapshot without workouts', async () => {
+    vi.mocked(getProgressSnapshot).mockResolvedValue({
+      hasAnyCompletedWorkout: false,
+      week: { sessionsDone: 0, sessionsTarget: 3, tonnageKg: 0, prCount: 0 },
+      weekBars: [],
+      movers: [],
+      recentPrs: [],
+      lifts: [],
+    });
+
+    render(
+      <MemoryRouter>
+        <TodayProgressCard />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByText('La progression apparaîtra après la première séance.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Voir la progression →' })).not.toBeInTheDocument();
+  });
+
+  it('shows the week, movers and progression link on Today', async () => {
+    vi.mocked(getProgressSnapshot).mockResolvedValue({
+      hasAnyCompletedWorkout: true,
+      week: { sessionsDone: 2, sessionsTarget: 3, tonnageKg: 1250, prCount: 1 },
+      weekBars: [],
+      movers: [{
+        exerciseId: 'squat',
+        name: 'Squat',
+        prevMaxKg: 80,
+        currMaxKg: 82.5,
+        deltaKg: 2.5,
+        hasRecentPr: true,
+      }],
+      recentPrs: [],
+      lifts: [],
+    });
+
+    render(
+      <MemoryRouter>
+        <TodayProgressCard />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('region', { name: 'Progression' })).toHaveTextContent(
+      '2 séances sur 3',
+    );
+    expect(screen.getByText('Squat')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Voir la progression →' })).toHaveAttribute(
+      'href',
+      '/progress',
+    );
+  });
+
   it('renders four tonnage bars relative to the maximum', () => {
     render(
       <WeekTonnageBars
