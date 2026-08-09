@@ -251,11 +251,17 @@ export function ActiveSessionScreen() {
   // Le repos suit toujours la validation d'une serie, y compris la derniere de l'exercice
   // (RG: le passage a l'exercice suivant n'intervient qu'a la fin du repos, jamais instantanement).
   const handleValidate = async () => {
-    if (step.kind !== 'exercise' || !workoutExerciseId || !currentExerciseId) return;
+    if (step.kind !== 'exercise' || !currentExerciseId) return;
+    let weId = workoutExerciseId;
+    if (!weId) {
+      const we = await getOrCreateWorkoutExercise(workoutId, currentExerciseId, step.item.order, substitutedFromId);
+      weId = we.id;
+      setWorkoutExerciseId(weId);
+    }
     const exercise = exercisesById.get(currentExerciseId);
     const isTime = exercise?.loadType === 'time';
     await logSet({
-      workoutExerciseId,
+      workoutExerciseId: weId,
       exerciseId: currentExerciseId,
       index: setIndex,
       weightKg: isTime ? null : weightKg,
@@ -264,7 +270,7 @@ export function ActiveSessionScreen() {
       isWarmup: false,
     });
     confirmSetFeedback();
-    const sets = await getSetLogs(workoutExerciseId);
+    const sets = await getSetLogs(weId);
     setLoggedSets(sets);
 
     const totalSets = step.item.sets ?? 1;
