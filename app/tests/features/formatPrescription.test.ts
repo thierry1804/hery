@@ -16,6 +16,7 @@ const baseItem: PrescribedItem = {
   durationSec: null,
   restSec: 90,
   perSide: false,
+  supersetGroup: null,
   notes: '',
   createdAt: '2026-08-08T00:00:00.000Z',
   updatedAt: '2026-08-08T00:00:00.000Z',

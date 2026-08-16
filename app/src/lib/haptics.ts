@@ -28,6 +28,10 @@ export function confirmSetFeedback(): void {
   vibrate(15);
 }
 
+export function restTickFeedback(): void {
+  vibrate(10);
+}
+
 export function restEndFeedback(): void {
   vibrate([0, 200, 100, 200]);
   playBeep(300, 660);

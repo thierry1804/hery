@@ -3,10 +3,20 @@ import { db } from '../db/db';
 export interface SessionProgressState {
   itemIndex: number;
   setIndex: number;
+  subIndex: number;
   checkedOrders: number[];
   restEndsAt: number | null;
   pendingAdvance: boolean;
 }
+
+const DEFAULT_STATE: SessionProgressState = {
+  itemIndex: 0,
+  setIndex: 1,
+  subIndex: 0,
+  checkedOrders: [],
+  restEndsAt: null,
+  pendingAdvance: false,
+};
 
 function key(workoutId: string): string {
   return `session-progress:${workoutId}`;
@@ -14,8 +24,9 @@ function key(workoutId: string): string {
 
 export async function loadProgress(workoutId: string): Promise<SessionProgressState> {
   const row = await db.settings.get(key(workoutId));
-  if (row) return row.value as SessionProgressState;
-  return { itemIndex: 0, setIndex: 1, checkedOrders: [], restEndsAt: null, pendingAdvance: false };
+  // ...DEFAULT_STATE en base : retro-compatible avec un etat sauvegarde avant l'ajout de subIndex.
+  if (row) return { ...DEFAULT_STATE, ...(row.value as Partial<SessionProgressState>) };
+  return DEFAULT_STATE;
 }
 
 export async function saveProgress(workoutId: string, state: SessionProgressState): Promise<void> {

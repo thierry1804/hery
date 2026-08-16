@@ -91,6 +91,9 @@ export interface PrescribedItem extends Common {
   restSec: number;
   perSide: boolean;
   notes: string;
+  // Items partageant un supersetGroup non-nul, consecutifs et de meme kind (strength/core),
+  // s'enchainent sans repos entre eux en seance ; le repos suit la fin d'un tour complet.
+  supersetGroup: string | null;
 }
 
 export interface Workout extends Common {

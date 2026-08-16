@@ -1,0 +1,24 @@
+.stats {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.stat {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statValue {
+  font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
+  font-weight: 800;
+  font-size: var(--fs-28);
+  line-height: 1;
+}
+
+.statLabel {
+  color: var(--fonte-300);
+  font-size: var(--fs-12);
+}

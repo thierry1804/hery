@@ -12,6 +12,7 @@ interface RawItem {
   restSec?: number;
   perSide?: boolean;
   notes?: string;
+  supersetGroup?: string;
 }
 
 export function buildProgramFromSeed(ts: string): {
@@ -81,6 +82,7 @@ function toPrescribedItem(
     durationSec: item.durationSec ?? null,
     restSec: item.restSec ?? 60,
     perSide: item.perSide ?? false,
+    supersetGroup: item.supersetGroup ?? null,
     notes: item.notes ?? '',
     ...common,
   };

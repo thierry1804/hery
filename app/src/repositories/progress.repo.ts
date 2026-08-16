@@ -1,7 +1,10 @@
 import { db } from '../db/db';
-import type { SetLog, Workout } from '../db/schema';
+import type { MuscleGroup, SetLog, Workout } from '../db/schema';
 import {
   buildLifts,
+  buildMuscleBalance,
+  buildMuscleFatigue,
+  buildStreakStats,
   buildWeekBars,
   selectMovers,
   selectRecentPrs,
@@ -126,6 +129,36 @@ export async function getProgressSnapshot(now: Date = new Date()): Promise<Progr
   }
 
   const weekStart = toDateStr(startOfIsoWeek(now));
+
+  const muscleContributions: { muscle: MuscleGroup; tonnageKg: number }[] = [];
+  for (const setLog of setLogs) {
+    if (setLog.isWarmup || setLog.weightKg == null || setLog.reps == null) continue;
+    const workoutExercise = workoutExerciseById.get(setLog.workoutExerciseId)!;
+    const workout = completedWorkoutById.get(workoutExercise.workoutId)!;
+    if (workout.date < weekStart) continue;
+    const exercise = exerciseById.get(workoutExercise.exerciseId);
+    if (!exercise) continue;
+    const multiplier = exercise.unilateral ? 2 : 1;
+    const tonnageKg = setLog.weightKg * setLog.reps * multiplier;
+    for (const muscle of exercise.primaryMuscles) {
+      muscleContributions.push({ muscle, tonnageKg });
+    }
+  }
+
+  const fatigueContributions: { muscle: MuscleGroup; workoutId: string; tonnageKg: number; hoursAgo: number }[] = [];
+  for (const setLog of setLogs) {
+    if (setLog.isWarmup || setLog.weightKg == null || setLog.reps == null) continue;
+    const workoutExercise = workoutExerciseById.get(setLog.workoutExerciseId)!;
+    const exercise = exerciseById.get(workoutExercise.exerciseId);
+    if (!exercise) continue;
+    const multiplier = exercise.unilateral ? 2 : 1;
+    const tonnageKg = setLog.weightKg * setLog.reps * multiplier;
+    const hoursAgo = (now.getTime() - new Date(setLog.completedAt).getTime()) / (1000 * 60 * 60);
+    for (const muscle of exercise.primaryMuscles) {
+      fatigueContributions.push({ muscle, workoutId: workoutExercise.workoutId, tonnageKg, hoursAgo });
+    }
+  }
+
   const prCount = setLogs.filter((setLog) => {
     if (!setLog.isPR || setLog.isWarmup) return false;
     const workoutExercise = workoutExerciseById.get(setLog.workoutExerciseId)!;
@@ -163,5 +196,9 @@ export async function getProgressSnapshot(now: Date = new Date()): Promise<Progr
     movers: selectMovers(histories, now),
     recentPrs: selectRecentPrs(recentPrs, now),
     lifts: buildLifts(histories),
+    muscleBalance: buildMuscleBalance(muscleContributions),
+    muscleFatigue: buildMuscleFatigue(fatigueContributions),
+    streak: buildStreakStats(workouts, now),
+    exerciseHistories: histories,
   };
 }

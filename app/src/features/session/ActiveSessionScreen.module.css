@@ -148,6 +148,16 @@
   color: var(--acier);
 }
 
+.supersetHint {
+  width: 100%;
+  margin: 0;
+  font-weight: 700;
+  font-size: var(--fs-12);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--acier);
+}
+
 .setList {
   flex: 0 1 auto;
   min-height: 0;
@@ -177,7 +187,8 @@
 }
 
 .weightRow,
-.repsRow {
+.repsRow,
+.timeRow {
   display: flex;
   justify-content: center;
 }
@@ -188,6 +199,19 @@
 
 .repsRow {
   opacity: 0.95;
+}
+
+.restRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  opacity: 0.85;
+}
+
+.restLabel {
+  color: var(--fonte-300);
+  font-size: var(--fs-12);
 }
 
 .actions {
@@ -244,11 +268,18 @@
   gap: var(--space-2);
 }
 
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .checkItem {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: var(--tap-min);
   padding: var(--space-3) var(--space-4);
   background: var(--fonte-700);
@@ -259,6 +290,10 @@
   text-align: left;
   cursor: pointer;
   user-select: none;
+}
+
+.checkItemDuration {
+  flex: none;
 }
 
 .checkItemDone {
@@ -285,6 +320,13 @@
   max-height: 32dvh;
   min-height: 96px;
   overflow: hidden;
+}
+
+.cardioDuration {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3) var(--space-4) 0;
 }
 
 .modalityRow {

@@ -87,3 +87,21 @@
   color: var(--sang);
   font-size: var(--fs-14);
 }
+
+.supersetLink {
+  width: 100%;
+  min-height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--fonte-300);
+  font-size: var(--fs-12);
+  text-align: center;
+  cursor: pointer;
+}
+
+.supersetBadge {
+  margin-left: var(--space-2);
+  color: var(--acier);
+  font-size: var(--fs-12);
+  font-weight: 500;
+}

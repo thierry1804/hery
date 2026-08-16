@@ -62,11 +62,33 @@ export async function touchWorkout(workoutId: string): Promise<void> {
   await db.workouts.update(workoutId, { updatedAt: nowIso() });
 }
 
+// Reglage en direct (duree d'un bloc au temps, repos) : n'affecte que cette seance,
+// jamais le programme (templateSnapshot est une copie figee au demarrage de la seance).
+export async function updateWorkoutItemPrescription(
+  workoutId: string,
+  itemId: string,
+  patch: Partial<Pick<PrescribedItem, 'durationSec' | 'restSec'>>,
+): Promise<PrescribedItem[] | undefined> {
+  const workout = await db.workouts.get(workoutId);
+  if (!workout) return undefined;
+  const templateSnapshot = workout.templateSnapshot.map((item) =>
+    item.id === itemId ? { ...item, ...patch } : item,
+  );
+  await db.workouts.update(workoutId, { templateSnapshot, updatedAt: nowIso() });
+  return templateSnapshot;
+}
+
 export async function getWorkoutExercises(workoutId: string): Promise<WorkoutExercise[]> {
   const list = await db.workoutExercises.where('workoutId').equals(workoutId).toArray();
   return list.filter((e) => e.deletedAt == null).sort((a, b) => a.order - b.order);
 }
 
+const pendingWorkoutExerciseCreations = new Map<string, Promise<WorkoutExercise>>();
+
+// Deux appels concurrents (ex: double-render) pour le meme (workoutId, exerciseId, order)
+// pouvaient tous deux ne pas trouver de ligne existante et creer deux WorkoutExercise
+// distincts, ce qui eparpillait les series entre deux enregistrements et faisait croire
+// que la premiere seance de l'exercice n'avait pas ete enregistree.
 export async function getOrCreateWorkoutExercise(
   workoutId: string,
   exerciseId: string,
@@ -78,23 +100,36 @@ export async function getOrCreateWorkoutExercise(
   );
   if (existing) return existing;
 
-  const lastSettings = await getLastMachineSettings(exerciseId);
-  const ts = nowIso();
-  const we: WorkoutExercise = {
-    id: newId(),
-    workoutId,
-    exerciseId,
-    substitutedFromId,
-    order,
-    machineSettings: lastSettings ?? '',
-    sessionRpe: null,
-    note: '',
-    createdAt: ts,
-    updatedAt: ts,
-    deletedAt: null,
-  };
-  await db.workoutExercises.put(we);
-  return we;
+  const dedupeKey = `${workoutId}:${exerciseId}:${order}`;
+  const inFlight = pendingWorkoutExerciseCreations.get(dedupeKey);
+  if (inFlight) return inFlight;
+
+  const creation = (async () => {
+    const lastSettings = await getLastMachineSettings(exerciseId);
+    const ts = nowIso();
+    const we: WorkoutExercise = {
+      id: newId(),
+      workoutId,
+      exerciseId,
+      substitutedFromId,
+      order,
+      machineSettings: lastSettings ?? '',
+      sessionRpe: null,
+      note: '',
+      createdAt: ts,
+      updatedAt: ts,
+      deletedAt: null,
+    };
+    await db.workoutExercises.put(we);
+    return we;
+  })();
+
+  pendingWorkoutExerciseCreations.set(dedupeKey, creation);
+  try {
+    return await creation;
+  } finally {
+    pendingWorkoutExerciseCreations.delete(dedupeKey);
+  }
 }
 
 export async function updateWorkoutExercise(

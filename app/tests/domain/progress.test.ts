@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildLifts,
+  buildMuscleBalance,
+  buildMuscleFatigue,
   buildWeekBars,
+  computeWeekStreak,
+  countActiveDaysInMonth,
   formatDeltaKg,
   formatTonnageKg,
   formatWeightKg,
@@ -154,3 +158,94 @@ describe('selectRecentPrs', () => {
     expect(list.map((p) => p.setLogId)).toEqual(['1', '3']);
   });
 });
+
+describe('buildMuscleBalance', () => {
+  it('sums tonnage per muscle and sorts descending', () => {
+    const balance = buildMuscleBalance([
+      { muscle: 'quadriceps', tonnageKg: 500 },
+      { muscle: 'pectoraux', tonnageKg: 300 },
+      { muscle: 'quadriceps', tonnageKg: 200 },
+    ]);
+    expect(balance).toEqual([
+      { muscle: 'quadriceps', tonnageKg: 700 },
+      { muscle: 'pectoraux', tonnageKg: 300 },
+    ]);
+  });
+
+  it('returns empty array for no contributions', () => {
+    expect(buildMuscleBalance([])).toEqual([]);
+  });
+});
+
+describe('computeWeekStreak', () => {
+  it('counts consecutive weeks meeting the target, without breaking on an in-progress current week', () => {
+    const now = new Date(2026, 7, 12); // Wednesday, current week not yet at target
+    const workouts = [
+      { date: '2026-08-11', status: 'completed' },
+      { date: '2026-08-03', status: 'completed' },
+      { date: '2026-08-04', status: 'completed' },
+      { date: '2026-08-05', status: 'completed' },
+      { date: '2026-07-27', status: 'completed' },
+      { date: '2026-07-28', status: 'completed' },
+      { date: '2026-07-29', status: 'completed' },
+      { date: '2026-07-20', status: 'completed' },
+    ];
+    expect(computeWeekStreak(workouts, now)).toBe(2);
+  });
+
+  it('returns 0 with no workouts', () => {
+    expect(computeWeekStreak([], new Date(2026, 7, 12))).toBe(0);
+  });
+});
+
+describe('countActiveDaysInMonth', () => {
+  it('counts distinct completed days in the current month', () => {
+    const now = new Date(2026, 7, 12);
+    const workouts = [
+      { date: '2026-08-01', status: 'completed' },
+      { date: '2026-08-05', status: 'completed' },
+      { date: '2026-08-05', status: 'completed' },
+      { date: '2026-07-31', status: 'completed' },
+      { date: '2026-08-06', status: 'abandoned' },
+    ];
+    expect(countActiveDaysInMonth(workouts, now)).toBe(2);
+  });
+});
+
+describe('buildMuscleFatigue', () => {
+  it('rates recent volume against the per-session baseline, decayed linearly over 72h', () => {
+    const fatigue = buildMuscleFatigue([
+      { muscle: 'pectoraux', workoutId: 'w1', tonnageKg: 800, hoursAgo: 200 },
+      { muscle: 'pectoraux', workoutId: 'w2', tonnageKg: 800, hoursAgo: 0 },
+    ]);
+    expect(fatigue).toEqual([{ muscle: 'pectoraux', fatiguePct: 100, daysSinceLastTrained: 0 }]);
+  });
+
+  it('caps fatigue at 100 when recent volume exceeds the historical baseline', () => {
+    const fatigue = buildMuscleFatigue([
+      { muscle: 'pectoraux', workoutId: 'w1', tonnageKg: 500, hoursAgo: 200 },
+      { muscle: 'pectoraux', workoutId: 'w2', tonnageKg: 1000, hoursAgo: 10 },
+      { muscle: 'pectoraux', workoutId: 'w3', tonnageKg: 1000, hoursAgo: 5 },
+    ]);
+    expect(fatigue[0]!.fatiguePct).toBe(100);
+  });
+
+  it('reports null fatigue with days-since-trained for zero-tonnage (bodyweight) contributions, sorted last', () => {
+    const fatigue = buildMuscleFatigue([
+      { muscle: 'pectoraux', workoutId: 'w1', tonnageKg: 800, hoursAgo: 0 },
+      { muscle: 'abdominaux', workoutId: 'w2', tonnageKg: 0, hoursAgo: 5 },
+    ]);
+    expect(fatigue).toEqual([
+      { muscle: 'pectoraux', fatiguePct: 100, daysSinceLastTrained: 0 },
+      { muscle: 'abdominaux', fatiguePct: null, daysSinceLastTrained: 0 },
+    ]);
+  });
+
+  it('ignores contributions older than the 72h window for the recent-volume weighting', () => {
+    const fatigue = buildMuscleFatigue([
+      { muscle: 'dorsaux', workoutId: 'w1', tonnageKg: 600, hoursAgo: 100 },
+    ]);
+    expect(fatigue).toEqual([{ muscle: 'dorsaux', fatiguePct: 0, daysSinceLastTrained: 4 }]);
+  });
+});
+

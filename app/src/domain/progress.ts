@@ -1,4 +1,5 @@
 import { toDateStr } from '../lib/date';
+import type { MuscleGroup } from '../db/schema';
 
 export const WEEK_SESSION_TARGET = 3;
 
@@ -52,6 +53,28 @@ export interface ExerciseSessionLift {
   latestPrAt: string | null;
 }
 
+export interface MuscleVolume {
+  muscle: MuscleGroup;
+  tonnageKg: number;
+}
+
+export interface StreakStats {
+  currentStreakWeeks: number;
+  activeDaysThisMonth: number;
+}
+
+export interface MuscleFatigue {
+  muscle: MuscleGroup;
+  fatiguePct: number | null;
+  daysSinceLastTrained: number;
+}
+
+export interface ExerciseHistory {
+  exerciseId: string;
+  name: string;
+  sessions: ExerciseSessionLift[];
+}
+
 export interface ProgressSnapshot {
   hasAnyCompletedWorkout: boolean;
   week: WeekStats;
@@ -59,6 +82,10 @@ export interface ProgressSnapshot {
   movers: Mover[];
   recentPrs: RecentPr[];
   lifts: LiftRow[];
+  muscleBalance: MuscleVolume[];
+  muscleFatigue: MuscleFatigue[];
+  streak: StreakStats;
+  exerciseHistories: ExerciseHistory[];
 }
 
 export function startOfIsoWeek(d: Date): Date {
@@ -232,3 +259,112 @@ export function selectRecentPrs(prs: RecentPr[], now: Date, limit = 10): RecentP
     .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
     .slice(0, limit);
 }
+
+export function buildMuscleBalance(
+  contributions: { muscle: MuscleGroup; tonnageKg: number }[],
+): MuscleVolume[] {
+  const totals = new Map<MuscleGroup, number>();
+  for (const c of contributions) {
+    totals.set(c.muscle, (totals.get(c.muscle) ?? 0) + c.tonnageKg);
+  }
+  return [...totals.entries()]
+    .map(([muscle, tonnageKg]) => ({ muscle, tonnageKg }))
+    .sort((a, b) => b.tonnageKg - a.tonnageKg);
+}
+
+const MAX_STREAK_WEEKS_LOOKBACK = 520; // ~10 ans, garde-fou contre boucle infinie
+
+export function computeWeekStreak(
+  workouts: { date: string; status: string }[],
+  now: Date,
+  target = WEEK_SESSION_TARGET,
+): number {
+  const completedDates = workouts.filter((w) => w.status === 'completed').map((w) => w.date);
+  let streak = 0;
+  let weekStart = startOfIsoWeek(now);
+  let isCurrentWeek = true;
+  for (let i = 0; i < MAX_STREAK_WEEKS_LOOKBACK; i++) {
+    const start = toDateStr(weekStart);
+    const end = new Date(weekStart);
+    end.setDate(end.getDate() + 7);
+    const count = completedDates.filter((d) => d >= start && d < toDateStr(end)).length;
+    if (count >= target) {
+      streak++;
+    } else if (!isCurrentWeek) {
+      break;
+    }
+    isCurrentWeek = false;
+    weekStart = new Date(weekStart);
+    weekStart.setDate(weekStart.getDate() - 7);
+  }
+  return streak;
+}
+
+export function countActiveDaysInMonth(
+  workouts: { date: string; status: string }[],
+  now: Date,
+): number {
+  const yearMonth = toDateStr(now).slice(0, 7);
+  const dates = new Set(
+    workouts.filter((w) => w.status === 'completed' && w.date.startsWith(yearMonth)).map((w) => w.date),
+  );
+  return dates.size;
+}
+
+export function buildStreakStats(
+  workouts: { date: string; status: string }[],
+  now: Date,
+): StreakStats {
+  return {
+    currentStreakWeeks: computeWeekStreak(workouts, now),
+    activeDaysThisMonth: countActiveDaysInMonth(workouts, now),
+  };
+}
+
+const FATIGUE_WINDOW_HOURS = 72;
+
+function fatigueDecayWeight(hoursAgo: number): number {
+  return Math.max(0, 1 - hoursAgo / FATIGUE_WINDOW_HOURS);
+}
+
+// Pas un modele physiologique : "fatigue" = volume recent (decroissance lineaire sur 72h)
+// rapporte a la dose habituelle du muscle (moyenne du tonnage par seance historique).
+// Un chiffre issu des donnees reelles de l'utilisateur, jamais une estimation IA opaque.
+export function buildMuscleFatigue(
+  contributions: { muscle: MuscleGroup; workoutId: string; tonnageKg: number; hoursAgo: number }[],
+): MuscleFatigue[] {
+  const recentWeighted = new Map<MuscleGroup, number>();
+  const perWorkoutTonnage = new Map<MuscleGroup, Map<string, number>>();
+  const minHoursAgo = new Map<MuscleGroup, number>();
+
+  for (const c of contributions) {
+    if (c.hoursAgo <= FATIGUE_WINDOW_HOURS) {
+      recentWeighted.set(c.muscle, (recentWeighted.get(c.muscle) ?? 0) + c.tonnageKg * fatigueDecayWeight(c.hoursAgo));
+    }
+    let byWorkout = perWorkoutTonnage.get(c.muscle);
+    if (!byWorkout) {
+      byWorkout = new Map();
+      perWorkoutTonnage.set(c.muscle, byWorkout);
+    }
+    byWorkout.set(c.workoutId, (byWorkout.get(c.workoutId) ?? 0) + c.tonnageKg);
+
+    const prevMin = minHoursAgo.get(c.muscle);
+    if (prevMin == null || c.hoursAgo < prevMin) minHoursAgo.set(c.muscle, c.hoursAgo);
+  }
+
+  const out: MuscleFatigue[] = [];
+  for (const [muscle, byWorkout] of perWorkoutTonnage) {
+    const sessionTonnages = [...byWorkout.values()];
+    const baseline = sessionTonnages.reduce((s, t) => s + t, 0) / sessionTonnages.length;
+    const weighted = recentWeighted.get(muscle) ?? 0;
+    const fatiguePct = baseline > 0 ? Math.min(100, Math.round((weighted / baseline) * 100)) : null;
+    out.push({
+      muscle,
+      fatiguePct,
+      daysSinceLastTrained: Math.floor(minHoursAgo.get(muscle)! / 24),
+    });
+  }
+
+  return out.sort((a, b) => (b.fatiguePct ?? -1) - (a.fatiguePct ?? -1));
+}
+

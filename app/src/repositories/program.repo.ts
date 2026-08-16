@@ -7,8 +7,8 @@ import { newId } from '../lib/id';
 
 type PrescribedItemInput = Omit<
   PrescribedItem,
-  'id' | 'sessionTemplateId' | 'createdAt' | 'updatedAt' | 'deletedAt'
-> & { id?: string };
+  'id' | 'sessionTemplateId' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'supersetGroup'
+> & { id?: string; supersetGroup?: string | null };
 
 type PrescribedItemPatch = Partial<Omit<PrescribedItemInput, 'id'>>;
 
@@ -76,6 +76,7 @@ export async function createPrescribedItem(
     ...input,
     id: input.id ?? newId(),
     sessionTemplateId,
+    supersetGroup: input.supersetGroup ?? null,
     createdAt: timestamp,
     updatedAt: timestamp,
     deletedAt: null,

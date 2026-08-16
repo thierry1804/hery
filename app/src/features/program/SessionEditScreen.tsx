@@ -6,8 +6,10 @@ import {
   getPrescribedItems,
   getTemplateById,
   reorderPrescribedItems,
+  updatePrescribedItem,
   updateSessionTemplate,
 } from '../../repositories/program.repo';
+import { newId } from '../../lib/id';
 import { BigButton } from '../../ui/BigButton';
 import { Stepper } from '../../ui/Stepper';
 import { ExerciseIllustration } from '../../ui/exercise-illustrations/ExerciseIllustration';
@@ -31,11 +33,7 @@ export function SessionEditScreen() {
   const loadItems = useCallback(async () => {
     const prescribedItems = await getPrescribedItems(templateId);
     const exerciseIds = Array.from(
-      new Set(
-        prescribedItems
-          .map((item) => item.exerciseId)
-          .filter((id): id is string => id != null),
-      ),
+      new Set(prescribedItems.map((item) => item.exerciseId).filter((id): id is string => id != null)),
     );
     const exercises = await getExercisesByIds(exerciseIds);
     setItems(prescribedItems);
@@ -99,6 +97,24 @@ export function SessionEditScreen() {
     }
   };
 
+  const toggleSuperset = async (item: PrescribedItem, prevItem: PrescribedItem) => {
+    setError('');
+    try {
+      if (item.supersetGroup != null && item.supersetGroup === prevItem.supersetGroup) {
+        await updatePrescribedItem(item.id, { supersetGroup: null });
+      } else {
+        const groupId = prevItem.supersetGroup ?? newId();
+        if (!prevItem.supersetGroup) {
+          await updatePrescribedItem(prevItem.id, { supersetGroup: groupId });
+        }
+        await updatePrescribedItem(item.id, { supersetGroup: groupId });
+      }
+      await loadItems();
+    } catch {
+      setError('Impossible de lier les exercices.');
+    }
+  };
+
   if (loading) return <div className={shared.screen} />;
 
   return (
@@ -156,11 +172,7 @@ export function SessionEditScreen() {
               />
             </div>
 
-            <BigButton
-              variant="primary"
-              disabled={!label.trim()}
-              onClick={() => void saveTemplate()}
-            >
+            <BigButton variant="primary" disabled={!label.trim()} onClick={() => void saveTemplate()}>
               Enregistrer
             </BigButton>
           </div>
@@ -168,56 +180,65 @@ export function SessionEditScreen() {
           <div className={shared.plate}>
             {items.map((item, index) => {
               const itemName =
-                (item.exerciseId ? exercisesById.get(item.exerciseId)?.name : undefined) ||
-                item.label;
+                (item.exerciseId ? exercisesById.get(item.exerciseId)?.name : undefined) || item.label;
+              const prevItem = items[index - 1];
+              const strengthOrCore = item.kind === 'strength' || item.kind === 'core';
+              const canLink =
+                prevItem != null &&
+                strengthOrCore &&
+                (prevItem.kind === 'strength' || prevItem.kind === 'core');
+              const linked =
+                canLink && item.supersetGroup != null && item.supersetGroup === prevItem!.supersetGroup;
               return (
-                <div className={styles.itemRow} key={item.id}>
-                  <Link
-                    className={styles.itemLink}
-                    to={`/settings/program/${templateId}/items/${item.id}`}
-                  >
-                    <ExerciseIllustration
-                      variant="thumb"
-                      exerciseId={item.exerciseId}
-                      name={itemName}
-                    />
-                    <span className={styles.itemText}>
-                      <span className={styles.itemName}>{itemName}</span>
-                      <span className={shared.muted}>{formatPrescription(item)}</span>
-                    </span>
-                  </Link>
-                  <div className={styles.reorder}>
+                <div key={item.id}>
+                  {canLink && (
                     <button
                       type="button"
-                      className={styles.reorderButton}
-                      aria-label={`Monter ${itemName}`}
-                      disabled={index === 0}
-                      onClick={() => void moveItem(index, -1)}
+                      className={styles.supersetLink}
+                      onClick={() => void toggleSuperset(item, prevItem!)}
                     >
-                      ↑
+                      {linked ? 'Superset — dissocier' : '+ Lier en superset'}
                     </button>
-                    <button
-                      type="button"
-                      className={styles.reorderButton}
-                      aria-label={`Descendre ${itemName}`}
-                      disabled={index === items.length - 1}
-                      onClick={() => void moveItem(index, 1)}
-                    >
-                      ↓
-                    </button>
+                  )}
+                  <div className={styles.itemRow}>
+                    <Link className={styles.itemLink} to={`/settings/program/${templateId}/items/${item.id}`}>
+                      <ExerciseIllustration variant="thumb" exerciseId={item.exerciseId} name={itemName} />
+                      <span className={styles.itemText}>
+                        <span className={styles.itemName}>
+                          {itemName}
+                          {linked && <span className={styles.supersetBadge}>Superset</span>}
+                        </span>
+                        <span className={shared.muted}>{formatPrescription(item)}</span>
+                      </span>
+                    </Link>
+                    <div className={styles.reorder}>
+                      <button
+                        type="button"
+                        className={styles.reorderButton}
+                        aria-label={`Monter ${itemName}`}
+                        disabled={index === 0}
+                        onClick={() => void moveItem(index, -1)}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.reorderButton}
+                        aria-label={`Descendre ${itemName}`}
+                        disabled={index === items.length - 1}
+                        onClick={() => void moveItem(index, 1)}
+                      >
+                        ↓
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
             })}
-            {items.length === 0 && (
-              <span className={shared.muted}>Aucun exercice dans cette séance.</span>
-            )}
+            {items.length === 0 && <span className={shared.muted}>Aucun exercice dans cette séance.</span>}
           </div>
 
-          <BigButton
-            variant="ghost"
-            onClick={() => navigate(`/settings/program/${templateId}/items/new`)}
-          >
+          <BigButton variant="ghost" onClick={() => navigate(`/settings/program/${templateId}/items/new`)}>
             Ajouter un exercice
           </BigButton>
         </>

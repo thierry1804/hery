@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { restEndFeedback } from '../../lib/haptics';
+import { restEndFeedback, restTickFeedback } from '../../lib/haptics';
+
+const HAPTIC_COUNTDOWN_SEC = 10;
 
 export interface RestTimerState {
   /** Secondes affichées (arrondi à la seconde). */
@@ -13,6 +15,7 @@ export function useRestTimer(restEndsAt: number | null, onComplete: () => void):
   const [state, setState] = useState<RestTimerState>({ remainingSec: 0, remainingMs: 0 });
   const rafRef = useRef<number | null>(null);
   const firedRef = useRef(false);
+  const lastTickSecRef = useRef<number | null>(null);
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
@@ -25,6 +28,15 @@ export function useRestTimer(restEndsAt: number | null, onComplete: () => void):
     const remainingMs = Math.max(0, restEndsAt - Date.now());
     const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
     setState({ remainingSec, remainingMs });
+
+    if (
+      remainingSec > 0 &&
+      remainingSec <= HAPTIC_COUNTDOWN_SEC &&
+      lastTickSecRef.current !== remainingSec
+    ) {
+      lastTickSecRef.current = remainingSec;
+      restTickFeedback();
+    }
 
     if (remainingMs <= 0) {
       if (!firedRef.current) {
@@ -40,6 +52,7 @@ export function useRestTimer(restEndsAt: number | null, onComplete: () => void):
 
   useEffect(() => {
     firedRef.current = false;
+    lastTickSecRef.current = null;
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
 
     if (restEndsAt == null) {

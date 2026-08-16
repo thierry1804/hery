@@ -21,6 +21,10 @@ describe('progress components', () => {
       movers: [],
       recentPrs: [],
       lifts: [],
+      muscleBalance: [],
+      muscleFatigue: [],
+      streak: { currentStreakWeeks: 0, activeDaysThisMonth: 0 },
+      exerciseHistories: [],
     });
 
     render(
@@ -50,6 +54,10 @@ describe('progress components', () => {
       }],
       recentPrs: [],
       lifts: [],
+      muscleBalance: [],
+      muscleFatigue: [],
+      streak: { currentStreakWeeks: 0, activeDaysThisMonth: 0 },
+      exerciseHistories: [],
     });
 
     render(
@@ -143,6 +151,10 @@ describe('progress route and navigation', () => {
       movers: [],
       recentPrs: [],
       lifts: [],
+      muscleBalance: [],
+      muscleFatigue: [],
+      streak: { currentStreakWeeks: 0, activeDaysThisMonth: 0 },
+      exerciseHistories: [],
     });
 
     render(

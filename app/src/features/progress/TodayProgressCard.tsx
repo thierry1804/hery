@@ -20,6 +20,10 @@ export function TodayProgressCard() {
           movers: [],
           recentPrs: [],
           lifts: [],
+          muscleBalance: [],
+          muscleFatigue: [],
+          streak: { currentStreakWeeks: 0, activeDaysThisMonth: 0 },
+          exerciseHistories: [],
         }),
       );
   }, []);
