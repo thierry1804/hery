@@ -2,6 +2,7 @@ import type { Exercise } from '../../db/schema';
 import { Sheet } from '../../ui/Sheet';
 import { BigButton } from '../../ui/BigButton';
 import { ExerciseIllustration } from '../../ui/exercise-illustrations/ExerciseIllustration';
+import { SearchIcon } from '../../ui/icons';
 import styles from './SubstituteDialog.module.css';
 
 interface Props {
@@ -23,7 +24,7 @@ export function SubstituteDialog({ alternatives, onPick, onBrowseAll, onClose }:
           </button>
         ))}
         <BigButton variant="ghost" onClick={onBrowseAll}>
-          Tous les exercices
+          <SearchIcon className="icon-inline" /> Tous les exercices
         </BigButton>
         <BigButton variant="ghost" onClick={onClose}>
           Annuler

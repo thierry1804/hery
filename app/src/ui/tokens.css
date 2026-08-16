@@ -84,6 +84,33 @@ a {
   font-stretch: var(--font-display-stretch);
 }
 
+.icon-inline {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+/* Illustration de fond discrete, ecrans calmes uniquement (jamais en seance active).
+   Le degrade protege le texte en haut/bas ; les plaques de donnees restent en aplat
+   par-dessus et ne sont jamais traversees visuellement par l'image. */
+.calm-bg {
+  position: relative;
+}
+
+.calm-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(180deg, rgba(19, 21, 25, 0.78) 0%, rgba(19, 21, 25, 0.2) 42%, rgba(19, 21, 25, 0.88) 100%),
+    url('./backgrounds/athletic-back.webp');
+  background-repeat: no-repeat, no-repeat;
+  background-position: left bottom, left bottom;
+  background-size: cover, 62% auto;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;

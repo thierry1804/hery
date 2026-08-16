@@ -93,11 +93,20 @@
 }
 
 .support {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
   margin: var(--space-4) 0 0;
   padding-top: var(--space-3);
   border-top: 1px solid var(--fonte-500);
   color: var(--fonte-300);
   font-size: var(--fs-12);
+}
+
+.supportItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .templateList {

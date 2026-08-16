@@ -109,6 +109,9 @@
 }
 
 .exerciseName {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   font-family: var(--font-display);
   font-stretch: var(--font-display-stretch);
   font-weight: 800;
@@ -117,6 +120,11 @@
   margin: 0;
   color: var(--magnesie);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.headerIcon {
+  flex: none;
+  color: var(--acier);
 }
 
 .metaRow {
@@ -235,6 +243,9 @@
 
 .undoSet {
   align-self: center;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
   background: none;
   border: none;
   color: var(--fonte-300);

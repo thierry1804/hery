@@ -28,6 +28,7 @@ import { NoteDialog } from './NoteDialog';
 import { useWakeLock } from './useWakeLock';
 import { useSessionStore } from './session.store';
 import { confirmSetFeedback } from '../../lib/haptics';
+import { FlameIcon, HeartIcon, PencilIcon, StretchIcon, SwapIcon, UndoIcon } from '../../ui/icons';
 import styles from './ActiveSessionScreen.module.css';
 
 type Step =
@@ -415,7 +416,14 @@ export function ActiveSessionScreen() {
       {step.kind === 'warmup' || step.kind === 'stretch' ? (
         <>
           <div className={styles.header}>
-            <h1 className={styles.exerciseName}>{step.kind === 'warmup' ? 'Échauffement' : 'Étirements'}</h1>
+            <h1 className={styles.exerciseName}>
+              {step.kind === 'warmup' ? (
+                <FlameIcon className={`icon-inline ${styles.headerIcon}`} />
+              ) : (
+                <StretchIcon className={`icon-inline ${styles.headerIcon}`} />
+              )}
+              {step.kind === 'warmup' ? 'Échauffement' : 'Étirements'}
+            </h1>
           </div>
           <div className={styles.checklist}>
             {step.items.map((it) => {
@@ -559,10 +567,10 @@ export function ActiveSessionScreen() {
             </BigButton>
             <div className={styles.secondary}>
               <BigButton variant="ghost" onClick={() => setShowSubstitute(true)}>
-                Remplacer
+                <SwapIcon className="icon-inline" /> Remplacer
               </BigButton>
               <BigButton variant="ghost" onClick={() => setShowNote(true)}>
-                Noter
+                <PencilIcon className="icon-inline" /> Noter
               </BigButton>
             </div>
             {loggedSets.length > 0 && (
@@ -578,7 +586,7 @@ export function ActiveSessionScreen() {
                   })()
                 }
               >
-                Annuler la dernière série
+                <UndoIcon className="icon-inline" /> Annuler la dernière série
               </button>
             )}
           </div>
@@ -674,7 +682,10 @@ function CardioBlock({
           name="Cardio"
         />
         <div className={styles.heroScrim}>
-          <h1 className={styles.exerciseName}>Cardio — {minutes} min</h1>
+          <h1 className={styles.exerciseName}>
+            <HeartIcon className={`icon-inline ${styles.headerIcon}`} />
+            Cardio — {minutes} min
+          </h1>
           <p className={styles.lastTime}>FC cible 110-130 bpm</p>
         </div>
       </div>

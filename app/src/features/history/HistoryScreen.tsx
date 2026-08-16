@@ -41,7 +41,7 @@ export function HistoryScreen() {
 
   if (workouts === null) {
     return (
-      <div className={styles.screen} aria-busy="true">
+      <div className={`${styles.screen} calm-bg`} aria-busy="true">
         <div className={styles.skeletonTitle} />
         <div className={styles.skeletonRow} />
         <div className={styles.skeletonRow} />
@@ -50,7 +50,7 @@ export function HistoryScreen() {
   }
 
   return (
-    <div className={styles.screen}>
+    <div className={`${styles.screen} calm-bg`}>
       <header className={styles.header}>
         <h1 className={styles.title}>Historique</h1>
         <p className={styles.weekLine}>

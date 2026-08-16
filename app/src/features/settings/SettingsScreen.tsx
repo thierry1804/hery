@@ -107,7 +107,7 @@ export function SettingsScreen() {
           : '—';
 
   return (
-    <div className={styles.screen}>
+    <div className={`${styles.screen} calm-bg`}>
       <header className={styles.header}>
         <h1 className={styles.title}>Réglages</h1>
       </header>

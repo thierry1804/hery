@@ -34,7 +34,7 @@ export function ProgressScreen() {
   }, []);
 
   return (
-    <main className={styles.screen}>
+    <main className={`${styles.screen} calm-bg`}>
       <h1 className={styles.title}>Progression</h1>
 
       {snapshot == null ? (

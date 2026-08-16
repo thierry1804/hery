@@ -6,6 +6,7 @@ import { getExercisesByIds } from '../../repositories/exercises.repo';
 import { getResumableWorkout, startWorkout } from '../../repositories/workouts.repo';
 import { dayOfWeekIso } from '../../lib/date';
 import { BigButton } from '../../ui/BigButton';
+import { FlameIcon, HeartIcon, StretchIcon } from '../../ui/icons';
 import { TodayProgressCard } from '../progress/TodayProgressCard';
 import styles from './TodayScreen.module.css';
 
@@ -68,7 +69,7 @@ export function TodayScreen() {
 
   if (template === undefined) {
     return (
-      <div className={styles.screen} aria-busy="true">
+      <div className={`${styles.screen} calm-bg`} aria-busy="true">
         <div className={styles.skeletonBlock} />
         <div className={styles.skeletonBlock} />
         <div className={styles.skeletonCta} />
@@ -84,7 +85,7 @@ export function TodayScreen() {
   if (template === null) {
     const nextDay = nextProgramDayLabel(allTemplates, dayOfWeekIso());
     return (
-      <div className={styles.screen}>
+      <div className={`${styles.screen} calm-bg`}>
         <header className={styles.header}>
           <p className={styles.subtitle}>Aujourd&apos;hui — {DAY_NAMES[dayOfWeekIso()]}</p>
           <h1 className={styles.title}>Repos</h1>
@@ -131,15 +132,16 @@ export function TodayScreen() {
   }
 
   const strengthItems = items.filter((i) => i.kind === 'strength' || i.kind === 'core');
-  const supportKinds = items.filter((i) => i.kind === 'warmup' || i.kind === 'cardio' || i.kind === 'stretch');
-  const supportSummary = Array.from(new Set(supportKinds.map((i) => {
-    if (i.kind === 'warmup') return 'Échauffement';
-    if (i.kind === 'cardio') return 'Cardio';
-    return 'Étirements';
-  }))).join(' · ');
+  const supportKinds = Array.from(
+    new Set(
+      items
+        .filter((i) => i.kind === 'warmup' || i.kind === 'cardio' || i.kind === 'stretch')
+        .map((i) => i.kind as 'warmup' | 'cardio' | 'stretch'),
+    ),
+  );
 
   return (
-    <div className={styles.screen}>
+    <div className={`${styles.screen} calm-bg`}>
       <header className={styles.header}>
         <p className={styles.subtitle}>Aujourd&apos;hui — {DAY_NAMES[dayOfWeekIso()]}</p>
         <h1 className={styles.title}>{template.label}</h1>
@@ -161,7 +163,18 @@ export function TodayScreen() {
             </div>
           );
         })}
-        {supportSummary ? <p className={styles.support}>{supportSummary}</p> : null}
+        {supportKinds.length > 0 && (
+          <div className={styles.support}>
+            {supportKinds.map((kind) => (
+              <span key={kind} className={styles.supportItem}>
+                {kind === 'warmup' && <FlameIcon className="icon-inline" />}
+                {kind === 'cardio' && <HeartIcon className="icon-inline" />}
+                {kind === 'stretch' && <StretchIcon className="icon-inline" />}
+                {kind === 'warmup' ? 'Échauffement' : kind === 'cardio' ? 'Cardio' : 'Étirements'}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <TodayProgressCard />
