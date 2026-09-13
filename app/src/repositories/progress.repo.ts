@@ -118,6 +118,10 @@ export async function getProgressSnapshot(now: Date = new Date()): Promise<Progr
           (total, setLog) => total + setLog.weightKg! * setLog.reps! * multiplier,
           0,
         ),
+        maxE1rm: (() => {
+          const e1rms = weightSets.map((s) => s.e1rm).filter((v): v is number => v != null);
+          return e1rms.length > 0 ? Math.max(...e1rms) : null;
+        })(),
         hadPr: prSets.length > 0,
         latestPrAt,
       });

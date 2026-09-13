@@ -49,9 +49,13 @@ export interface ExerciseSessionLift {
   maxWeightKg: number;
   repsAtMax: number;
   tonnageKg: number;
+  maxE1rm: number | null;
   hadPr: boolean;
   latestPrAt: string | null;
 }
+
+export type TrendMetric = 'weight' | 'e1rm' | 'volume';
+export type TrendWeeks = 4 | 8 | 12;
 
 export interface MuscleVolume {
   muscle: MuscleGroup;
@@ -123,6 +127,38 @@ export function formatDeltaKg(delta: number): string {
   if (delta === 0) return '=';
   const abs = formatWeightKg(Math.abs(delta));
   return delta > 0 ? `+${abs}` : `−${abs}`;
+}
+
+export function filterSessionsByWeeks(
+  sessions: ExerciseSessionLift[],
+  weeks: TrendWeeks,
+  now: Date,
+): ExerciseSessionLift[] {
+  const cutoff = new Date(now);
+  cutoff.setHours(0, 0, 0, 0);
+  cutoff.setDate(cutoff.getDate() - weeks * 7);
+  const cutoffStr = toDateStr(cutoff);
+  return sessions.filter((s) => s.workoutDate >= cutoffStr);
+}
+
+export function metricValue(session: ExerciseSessionLift, metric: TrendMetric): number | null {
+  if (metric === 'weight') return session.maxWeightKg;
+  if (metric === 'volume') return session.tonnageKg;
+  return session.maxE1rm;
+}
+
+export function formatTrendValue(metric: TrendMetric, value: number): string {
+  if (metric === 'volume') return formatTonnageKg(value);
+  return `${formatWeightKg(value)} kg`;
+}
+
+export function formatTrendDelta(metric: TrendMetric, delta: number): string {
+  if (delta === 0) return '=';
+  if (metric === 'volume') {
+    const abs = formatTonnageKg(Math.abs(delta));
+    return delta > 0 ? `+${abs}` : `−${abs}`;
+  }
+  return formatDeltaKg(delta);
 }
 
 export function summarizeWeek(

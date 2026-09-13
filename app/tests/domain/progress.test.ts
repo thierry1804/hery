@@ -6,10 +6,12 @@ import {
   buildWeekBars,
   computeWeekStreak,
   countActiveDaysInMonth,
+  filterSessionsByWeeks,
   formatDeltaKg,
   formatTonnageKg,
   formatWeightKg,
   isoWeekStarts,
+  metricValue,
   selectMovers,
   selectRecentPrs,
   startOfIsoWeek,
@@ -93,23 +95,23 @@ describe('selectMovers', () => {
           exerciseId: 'a',
           name: 'Presse',
           sessions: [
-            { workoutDate: '2026-07-01', workoutId: '1', maxWeightKg: 50, repsAtMax: 10, tonnageKg: 1500, hadPr: false, latestPrAt: null },
-            { workoutDate: '2026-08-01', workoutId: '2', maxWeightKg: 52.5, repsAtMax: 10, tonnageKg: 1575, hadPr: true, latestPrAt: '2026-08-01T10:00:00.000Z' },
+            { workoutDate: '2026-07-01', workoutId: '1', maxWeightKg: 50, repsAtMax: 10, tonnageKg: 1500, maxE1rm: null, hadPr: false, latestPrAt: null },
+            { workoutDate: '2026-08-01', workoutId: '2', maxWeightKg: 52.5, repsAtMax: 10, tonnageKg: 1575, maxE1rm: 70, hadPr: true, latestPrAt: '2026-08-01T10:00:00.000Z' },
           ],
         },
         {
           exerciseId: 'b',
           name: 'Row',
           sessions: [
-            { workoutDate: '2026-07-01', workoutId: '1', maxWeightKg: 40, repsAtMax: 10, tonnageKg: 1200, hadPr: false, latestPrAt: null },
-            { workoutDate: '2026-08-02', workoutId: '3', maxWeightKg: 40, repsAtMax: 10, tonnageKg: 1200, hadPr: false, latestPrAt: null },
+            { workoutDate: '2026-07-01', workoutId: '1', maxWeightKg: 40, repsAtMax: 10, tonnageKg: 1200, maxE1rm: null, hadPr: false, latestPrAt: null },
+            { workoutDate: '2026-08-02', workoutId: '3', maxWeightKg: 40, repsAtMax: 10, tonnageKg: 1200, maxE1rm: null, hadPr: false, latestPrAt: null },
           ],
         },
         {
           exerciseId: 'c',
           name: 'One',
           sessions: [
-            { workoutDate: '2026-08-01', workoutId: '2', maxWeightKg: 100, repsAtMax: 5, tonnageKg: 500, hadPr: true, latestPrAt: '2026-08-01T10:00:00.000Z' },
+            { workoutDate: '2026-08-01', workoutId: '2', maxWeightKg: 100, repsAtMax: 5, tonnageKg: 500, maxE1rm: 70, hadPr: true, latestPrAt: '2026-08-01T10:00:00.000Z' },
           ],
         },
       ],
@@ -129,7 +131,7 @@ describe('buildLifts', () => {
         exerciseId: 'c',
         name: 'One',
         sessions: [
-          { workoutDate: '2026-08-01', workoutId: '2', maxWeightKg: 100, repsAtMax: 5, tonnageKg: 500, hadPr: true, latestPrAt: null },
+          { workoutDate: '2026-08-01', workoutId: '2', maxWeightKg: 100, repsAtMax: 5, tonnageKg: 500, maxE1rm: 120, hadPr: true, latestPrAt: null },
         ],
       },
     ]);
@@ -246,6 +248,59 @@ describe('buildMuscleFatigue', () => {
       { muscle: 'dorsaux', workoutId: 'w1', tonnageKg: 600, hoursAgo: 100 },
     ]);
     expect(fatigue).toEqual([{ muscle: 'dorsaux', fatiguePct: 0, daysSinceLastTrained: 4 }]);
+  });
+
+  it('filterSessionsByWeeks keeps dates within window', () => {
+    const now = new Date(2026, 8, 13); // 2026-09-13 local
+    const sessions = [
+      {
+        workoutDate: '2026-06-01',
+        workoutId: 'a',
+        maxWeightKg: 50,
+        repsAtMax: 8,
+        tonnageKg: 400,
+        maxE1rm: 60,
+        hadPr: false,
+        latestPrAt: null,
+      },
+      {
+        workoutDate: '2026-08-20',
+        workoutId: 'b',
+        maxWeightKg: 55,
+        repsAtMax: 8,
+        tonnageKg: 440,
+        maxE1rm: 65,
+        hadPr: false,
+        latestPrAt: null,
+      },
+      {
+        workoutDate: '2026-09-10',
+        workoutId: 'c',
+        maxWeightKg: 60,
+        repsAtMax: 8,
+        tonnageKg: 480,
+        maxE1rm: 70,
+        hadPr: true,
+        latestPrAt: 'x',
+      },
+    ];
+    expect(filterSessionsByWeeks(sessions, 4, now).map((s) => s.workoutId)).toEqual(['b', 'c']);
+  });
+
+  it('metricValue returns null for missing e1rm', () => {
+    const s = {
+      workoutDate: '2026-09-10',
+      workoutId: 'c',
+      maxWeightKg: 60,
+      repsAtMax: 8,
+      tonnageKg: 480,
+      maxE1rm: null,
+      hadPr: false,
+      latestPrAt: null,
+    };
+    expect(metricValue(s, 'e1rm')).toBeNull();
+    expect(metricValue(s, 'weight')).toBe(60);
+    expect(metricValue(s, 'volume')).toBe(480);
   });
 });
 
