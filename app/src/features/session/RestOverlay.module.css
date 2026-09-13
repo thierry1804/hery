@@ -173,6 +173,21 @@
   line-height: 1.35;
 }
 
+.nextBlock {
+  display: grid;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.nextLoad {
+  margin: 0;
+  color: var(--magnesie);
+  font-family: var(--font-display);
+  font-size: var(--fs-28);
+  font-weight: 800;
+  line-height: 1;
+}
+
 .ringWrap {
   position: relative;
   width: 300px;

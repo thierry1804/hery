@@ -114,6 +114,7 @@ export function ActiveSessionScreen() {
   const [checkedOrders, setCheckedOrders] = useState<Set<number>>(new Set());
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
   const [restTotalSec, setRestTotalSec] = useState(90);
+  const [restNextLoadKg, setRestNextLoadKg] = useState<number | null>(null);
   const [pendingAdvance, setPendingAdvance] = useState(false);
 
   const [currentExerciseId, setCurrentExerciseId] = useState<string | null>(null);
@@ -269,6 +270,41 @@ export function ActiveSessionScreen() {
     // relancer ce chargement (qui ecraserait poids/reps en cours de saisie).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemIndex, setIndex, subIndex, currentExerciseId, exercisesById]);
+
+  useEffect(() => {
+    if (restEndsAt == null) {
+      setRestNextLoadKg(null);
+      return;
+    }
+
+    if (!pendingAdvance && step?.kind === 'exercise') {
+      setRestNextLoadKg(weightKg);
+      return;
+    }
+
+    const targetStep = pendingAdvance ? steps[itemIndex + 1] : step;
+    const targetItem = targetStep?.kind === 'exercise'
+      ? targetStep.item
+      : targetStep?.kind === 'superset'
+        ? targetStep.items[0]
+        : null;
+    const exerciseId = targetItem?.exerciseId ?? null;
+    if (!exerciseId || exercisesById.get(exerciseId)?.loadType !== 'weight') {
+      setRestNextLoadKg(null);
+      return;
+    }
+
+    let cancelled = false;
+    void Promise.all([
+      getAcceptedCoachTarget(exerciseId),
+      getLastCompletedSets(exerciseId, workoutId),
+    ]).then(([coachTarget, previousSets]) => {
+      if (cancelled) return;
+      const previous = previousSets.find((set) => set.index === 1) ?? previousSets[0];
+      setRestNextLoadKg(coachTarget ?? previous?.weightKg ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [restEndsAt, pendingAdvance, step, steps, itemIndex, exercisesById, weightKg, workoutId]);
 
   if (finished) return <FinishedView workoutId={workoutId} onDone={() => navigate('/')} />;
   if (!workout || !step) {
@@ -705,6 +741,7 @@ export function ActiveSessionScreen() {
           restEndsAt={restEndsAt}
           totalSec={restTotalSec}
           nextHint={restNextHint}
+          nextLoadKg={restNextLoadKg}
           onExtend={extendRest}
           onSkip={finishRest}
           onComplete={finishRest}
