@@ -107,7 +107,7 @@ Toutes les entités portent :
 | `startedAt` / `endedAt` | `string \| null` | |
 | `status` | `'in_progress' \| 'completed' \| 'abandoned'` | |
 | `bodyweightKg` | `number \| null` | Saisi une fois par semaine, pas par séance |
-| `totalTonnageKg` | `number` | Calculé à la clôture |
+| `totalTonnageKg` | `number` | Agrégat dénormalisé : rafraîchi à chaque mutation de série (pas seulement à la clôture) |
 | `notes` | `string` | |
 
 ### `WorkoutExercise` — exercice réalisé
@@ -121,6 +121,7 @@ Toutes les entités portent :
 | `machineSettings` | `string` | « Siège 4, cale-cuisses 3 » — rappelé automatiquement |
 | `sessionRpe` | `6 \| 8 \| 9.5 \| null` | Demandé une fois, en fin d'exercice (`RG-11`) |
 | `note` | `string` | Douleur, sensation |
+| `completionStatus` | `'planned' \| 'started' \| 'completed' \| 'skipped'` | Planifié / commencé / terminé / ignoré. Migration historique : ≥ 1 série de travail → `completed`, sinon `planned` (jamais inventer `skipped`) |
 
 ### `SetLog` — série
 
@@ -174,8 +175,8 @@ Table clé/valeur : cible protéines quotidienne, incréments personnalisés, da
 | Grandeur | Formule | Contrainte |
 |---|---|---|
 | **e1RM** (Epley) | `weightKg × (1 + reps / 30)` | Non calculé au-delà de 12 reps (`RG-13`) |
-| **Tonnage d'une série** | `weightKg × reps` (× 2 si unilatéral) | Séries d'échauffement exclues |
-| **Tonnage d'une séance** | Somme des tonnages de séries | |
+| **Tonnage d'une série** | `weightKg × reps` (× 2 si unilatéral) | Séries d'échauffement, soft-deleted, `reps < 1` ou `weightKg` null exclues |
+| **Tonnage d'une séance** | Somme des tonnages de séries | Stocké dans `Workout.totalTonnageKg`, recalculé après chaque mutation de série |
 | **Volume d'un muscle** | `Σ (séries effectives × coefficient)` sur la période | Primaire 1,0 · secondaire 0,5 (`RG-02`, `RG-15`) |
 | **PR de charge** | `weightKg` > max historique sur l'exercice, `reps` ≥ 1 | Hors échauffement (`RG-16`) |
 | **PR de reps** | `reps` > max historique à `weightKg` égal ou supérieur | |

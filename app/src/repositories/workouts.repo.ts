@@ -4,6 +4,12 @@ import { nowIso, todayDateStr } from '../lib/date';
 import { calculateE1rm } from '../domain/e1rm';
 import { detectPrKinds } from '../domain/records';
 import { shouldAutoAbandon, canResume } from '../domain/session-machine';
+import { computeWorkoutTonnage } from '../domain/tonnage';
+import {
+  statusAfterLeaveWithSets,
+  statusAfterLogSet,
+  statusAfterSkip,
+} from '../domain/workout-exercise-status';
 import type {
   CardioLog,
   PrescribedItem,
@@ -116,6 +122,7 @@ export async function getOrCreateWorkoutExercise(
       machineSettings: lastSettings ?? '',
       sessionRpe: null,
       note: '',
+      completionStatus: 'planned',
       createdAt: ts,
       updatedAt: ts,
       deletedAt: null,
@@ -215,7 +222,13 @@ export async function logSet(input: LogSetInput): Promise<SetLog> {
   };
   await db.setLogs.put(set);
   const we = await db.workoutExercises.get(input.workoutExerciseId);
-  if (we) await touchWorkout(we.workoutId);
+  if (we) {
+    const next = statusAfterLogSet(we.completionStatus ?? 'planned');
+    if (next !== we.completionStatus) {
+      await db.workoutExercises.update(we.id, { completionStatus: next, updatedAt: ts });
+    }
+    await recomputeWorkoutTonnage(we.workoutId);
+  }
   return set;
 }
 
@@ -231,8 +244,43 @@ async function getPriorSetsForExercise(exerciseId: string, _currentWorkoutExerci
   return allSets;
 }
 
+export async function recomputeWorkoutTonnage(workoutId: string): Promise<number> {
+  const exercises = await getWorkoutExercises(workoutId);
+  const unilateral = new Map<string, boolean>();
+  const flat: Array<{
+    weightKg: number | null;
+    reps: number | null;
+    isWarmup: boolean;
+    deletedAt?: string | null;
+    exerciseId: string;
+  }> = [];
+
+  for (const we of exercises) {
+    const ex = await db.exercises.get(we.exerciseId);
+    unilateral.set(we.exerciseId, ex?.unilateral ?? false);
+    const sets = await db.setLogs.where('workoutExerciseId').equals(we.id).toArray();
+    for (const s of sets) {
+      flat.push({
+        weightKg: s.weightKg,
+        reps: s.reps,
+        isWarmup: s.isWarmup,
+        deletedAt: s.deletedAt,
+        exerciseId: we.exerciseId,
+      });
+    }
+  }
+
+  const tonnage = computeWorkoutTonnage(flat, unilateral);
+  await db.workouts.update(workoutId, { totalTonnageKg: tonnage, updatedAt: nowIso() });
+  return tonnage;
+}
+
 export async function removeSet(setLogId: string): Promise<void> {
+  const set = await db.setLogs.get(setLogId);
   await db.setLogs.update(setLogId, { deletedAt: nowIso(), updatedAt: nowIso() });
+  if (!set) return;
+  const we = await db.workoutExercises.get(set.workoutExerciseId);
+  if (we) await recomputeWorkoutTonnage(we.workoutId);
 }
 
 // RG-12: correction a posteriori journalisee.
@@ -251,6 +299,49 @@ export async function editSetLog(
     editedAt: nowIso(),
     updatedAt: nowIso(),
   });
+  const we = await db.workoutExercises.get(set.workoutExerciseId);
+  if (we) await recomputeWorkoutTonnage(we.workoutId);
+}
+
+export async function skipWorkoutExercise(workoutExerciseId: string): Promise<void> {
+  const we = await db.workoutExercises.get(workoutExerciseId);
+  if (!we || we.deletedAt != null) return;
+  await db.workoutExercises.update(workoutExerciseId, {
+    completionStatus: statusAfterSkip(we.completionStatus ?? 'planned'),
+    updatedAt: nowIso(),
+  });
+  await touchWorkout(we.workoutId);
+}
+
+export async function markExerciseCompleted(workoutExerciseId: string): Promise<void> {
+  const we = await db.workoutExercises.get(workoutExerciseId);
+  if (!we || we.deletedAt != null) return;
+  const sets = await getSetLogs(workoutExerciseId);
+  const next = statusAfterLeaveWithSets(we.completionStatus ?? 'planned', sets.length > 0);
+  await db.workoutExercises.update(workoutExerciseId, {
+    completionStatus: next,
+    updatedAt: nowIso(),
+  });
+}
+
+export async function updateWorkoutTimes(
+  workoutId: string,
+  startedAt: string,
+  endedAt: string,
+): Promise<void> {
+  if (new Date(endedAt).getTime() < new Date(startedAt).getTime()) {
+    throw new Error('endedAt must be >= startedAt');
+  }
+  await db.workouts.update(workoutId, { startedAt, endedAt, updatedAt: nowIso() });
+}
+
+export async function markRemainingExercisesSkipped(workoutId: string): Promise<void> {
+  const list = await getWorkoutExercises(workoutId);
+  for (const we of list) {
+    if (we.completionStatus === 'planned') {
+      await skipWorkoutExercise(we.id);
+    }
+  }
 }
 
 export async function addCardioLog(
@@ -272,19 +363,7 @@ export async function addCardioLog(
 }
 
 export async function completeWorkout(workoutId: string): Promise<void> {
-  const exercises = await getWorkoutExercises(workoutId);
-  let tonnage = 0;
-  for (const we of exercises) {
-    const sets = await getSetLogs(we.id);
-    const exercise = await db.exercises.get(we.exerciseId);
-    const multiplier = exercise?.unilateral ? 2 : 1;
-    for (const s of sets) {
-      if (s.isWarmup) continue;
-      if (s.weightKg != null && s.reps != null) {
-        tonnage += s.weightKg * s.reps * multiplier;
-      }
-    }
-  }
+  const tonnage = await recomputeWorkoutTonnage(workoutId);
   const ts = nowIso();
   await db.workouts.update(workoutId, {
     status: 'completed',

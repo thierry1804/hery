@@ -188,6 +188,59 @@
   padding: var(--space-3) 0;
 }
 
+.suspect {
+  color: var(--laiton);
+  font-size: var(--fs-14);
+}
+
+.statusLabel {
+  color: var(--fonte-300);
+  font-size: var(--fs-14);
+  font-weight: 400;
+}
+
+.correctTimes {
+  align-self: flex-start;
+  margin-top: var(--space-2);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--fonte-300);
+  font-size: var(--fs-14);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.timeEditPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.timeEditPanel label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--fs-14);
+  color: var(--fonte-300);
+}
+
+.timeEditPanel input {
+  min-height: 44px;
+  padding: var(--space-2);
+  background: var(--fonte-700);
+  border: 1px solid var(--fonte-500);
+  color: var(--magnesie);
+  border-radius: var(--radius-button);
+}
+
+.timeError {
+  margin: 0;
+  color: var(--laiton);
+  font-size: var(--fs-14);
+}
+
 .skeletonTitle {
   height: 36px;
   width: 60%;

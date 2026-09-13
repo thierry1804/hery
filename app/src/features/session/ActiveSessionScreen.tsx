@@ -9,10 +9,16 @@ import {
   getSetLogs,
   getWorkout,
   logSet,
+  markExerciseCompleted,
+  markRemainingExercisesSkipped,
   removeSet,
+  skipWorkoutExercise,
   updateWorkoutExercise,
   updateWorkoutItemPrescription,
+  updateWorkoutTimes,
 } from '../../repositories/workouts.repo';
+import { isImplausibleDuration, workoutDurationSec } from '../../domain/tonnage';
+import { Sheet } from '../../ui/Sheet';
 import { getAllExercises } from '../../repositories/exercises.repo';
 import { ExercisePickerSheet } from '../program/ExercisePickerSheet';
 import { getTemplateById } from '../../repositories/program.repo';
@@ -121,6 +127,14 @@ export function ActiveSessionScreen() {
   const [showNote, setShowNote] = useState(false);
   const [finished, setFinished] = useState(false);
   const [sessionLabel, setSessionLabel] = useState('Séance');
+  const [durationConfirm, setDurationConfirm] = useState<{
+    durationSec: number;
+    markSkipped: boolean;
+  } | null>(null);
+  const [correctingTimes, setCorrectingTimes] = useState(false);
+  const [editStartedLocal, setEditStartedLocal] = useState('');
+  const [editEndedLocal, setEditEndedLocal] = useState('');
+  const [timeError, setTimeError] = useState<string | null>(null);
 
   useWakeLock(!finished);
 
@@ -280,7 +294,71 @@ export function ActiveSessionScreen() {
     return 'Étirements';
   })();
 
+  const finishWorkout = async (opts?: { markSkipped?: boolean; startedAt?: string; endedAt?: string }) => {
+    if (opts?.startedAt && opts?.endedAt) {
+      await updateWorkoutTimes(workoutId, opts.startedAt, opts.endedAt);
+    }
+    if (opts?.markSkipped) {
+      await markRemainingExercisesSkipped(workoutId);
+    }
+    await completeWorkout(workoutId);
+    await clearProgress(workoutId);
+    setDurationConfirm(null);
+    setCorrectingTimes(false);
+    setFinished(true);
+  };
+
+  const requestFinishWorkout = () => {
+    const startedAt = workout?.startedAt ?? null;
+    const provisionalEnd = new Date().toISOString();
+    const durationSec = workoutDurationSec(startedAt, provisionalEnd);
+    if (durationSec != null && isImplausibleDuration(durationSec)) {
+      setDurationConfirm({ durationSec, markSkipped: false });
+      return;
+    }
+    void finishWorkout();
+  };
+
   const goToNextStep = () => {
+    void (async () => {
+      if (workoutExerciseId) {
+        await markExerciseCompleted(workoutExerciseId);
+      }
+      setCurrentExerciseId(null);
+      setSubstitutedFromId(null);
+      setWorkoutExerciseId(null);
+      setLoggedSets([]);
+      setSetIndex(1);
+      setSubIndex(0);
+      setPendingAdvance(false);
+      const nextIndex = itemIndex + 1;
+      if (nextIndex >= totalSteps) {
+        requestFinishWorkout();
+        return;
+      }
+      setItemIndex(nextIndex);
+      persist({ itemIndex: nextIndex, setIndex: 1, subIndex: 0, restEndsAt: null, pendingAdvance: false });
+      setRestEndsAt(null);
+    })();
+  };
+
+  const handleSkip = async () => {
+    if ((step.kind !== 'exercise' && step.kind !== 'superset') || !currentExerciseId) return;
+    const current = activeItem(step, subIndex);
+    if (!current) return;
+    let weId = workoutExerciseId;
+    if (!weId) {
+      const we = await getOrCreateWorkoutExercise(
+        workoutId,
+        currentExerciseId,
+        current.order,
+        substitutedFromId,
+      );
+      weId = we.id;
+      setWorkoutExerciseId(weId);
+    }
+    await skipWorkoutExercise(weId);
+    // Ne pas appeler markExerciseCompleted : déjà skipped
     setCurrentExerciseId(null);
     setSubstitutedFromId(null);
     setWorkoutExerciseId(null);
@@ -290,11 +368,7 @@ export function ActiveSessionScreen() {
     setPendingAdvance(false);
     const nextIndex = itemIndex + 1;
     if (nextIndex >= totalSteps) {
-      void (async () => {
-        await completeWorkout(workoutId);
-        await clearProgress(workoutId);
-        setFinished(true);
-      })();
+      requestFinishWorkout();
       return;
     }
     setItemIndex(nextIndex);
@@ -572,6 +646,9 @@ export function ActiveSessionScreen() {
               <BigButton variant="ghost" onClick={() => setShowNote(true)}>
                 <PencilIcon className="icon-inline" /> Noter
               </BigButton>
+              <BigButton variant="ghost" onClick={() => void handleSkip()}>
+                Ignorer
+              </BigButton>
             </div>
             {loggedSets.length > 0 && (
               <button
@@ -645,8 +722,98 @@ export function ActiveSessionScreen() {
           onClose={() => setShowNote(false)}
         />
       )}
+
+      {durationConfirm && (
+        <Sheet title="Durée inhabituelle" onClose={() => setDurationConfirm(null)}>
+          <p className={styles.durationHint}>
+            Durée inhabituelle ({Math.round(durationConfirm.durationSec / 60)} min). Confirmer ou corriger les
+            heures.
+          </p>
+          <label className={styles.durationCheck}>
+            <input
+              type="checkbox"
+              checked={durationConfirm.markSkipped}
+              onChange={(e) =>
+                setDurationConfirm({ ...durationConfirm, markSkipped: e.target.checked })
+              }
+            />
+            Marquer les exercices non faits comme ignorés
+          </label>
+          {correctingTimes ? (
+            <div className={styles.timeEdit}>
+              <label>
+                Début
+                <input
+                  type="datetime-local"
+                  value={editStartedLocal}
+                  onChange={(e) => setEditStartedLocal(e.target.value)}
+                />
+              </label>
+              <label>
+                Fin
+                <input
+                  type="datetime-local"
+                  value={editEndedLocal}
+                  onChange={(e) => setEditEndedLocal(e.target.value)}
+                />
+              </label>
+              {timeError ? <p className={styles.timeError}>{timeError}</p> : null}
+              <BigButton
+                variant="primary"
+                onClick={() =>
+                  void (async () => {
+                    try {
+                      setTimeError(null);
+                      const startedAt = localInputToIso(editStartedLocal);
+                      const endedAt = localInputToIso(editEndedLocal);
+                      await finishWorkout({
+                        markSkipped: durationConfirm.markSkipped,
+                        startedAt,
+                        endedAt,
+                      });
+                    } catch {
+                      setTimeError('La fin doit être après le début.');
+                    }
+                  })()
+                }
+              >
+                Enregistrer et terminer
+              </BigButton>
+            </div>
+          ) : (
+            <div className={styles.durationActions}>
+              <BigButton
+                variant="primary"
+                onClick={() => void finishWorkout({ markSkipped: durationConfirm.markSkipped })}
+              >
+                Confirmer
+              </BigButton>
+              <BigButton
+                variant="ghost"
+                onClick={() => {
+                  setCorrectingTimes(true);
+                  setEditStartedLocal(isoToLocalInput(workout?.startedAt ?? new Date().toISOString()));
+                  setEditEndedLocal(isoToLocalInput(new Date().toISOString()));
+                }}
+              >
+                Corriger
+              </BigButton>
+            </div>
+          )}
+        </Sheet>
+      )}
     </div>
   );
+}
+
+function isoToLocalInput(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function localInputToIso(local: string): string {
+  return new Date(local).toISOString();
 }
 
 function CardioBlock({

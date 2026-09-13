@@ -44,6 +44,30 @@ export class HeryDB extends Dexie {
       proteinEntries: 'id, date',
       settings: 'key',
     });
+
+    this.version(2)
+      .stores({
+        exercises: 'id, name, *primaryMuscles, equipment, updatedAt',
+        cycles: 'id, startDate, updatedAt',
+        sessionTemplates: 'id, cycleId, code, dayOfWeek, updatedAt',
+        prescribedItems: 'id, sessionTemplateId, [sessionTemplateId+order], exerciseId',
+        workouts: 'id, date, status, sessionTemplateId, updatedAt',
+        workoutExercises: 'id, workoutId, exerciseId, [workoutId+order]',
+        setLogs: 'id, workoutExerciseId, [workoutExerciseId+index], completedAt, isPR',
+        cardioLogs: 'id, workoutId, date',
+        bodyMetrics: 'id, date',
+        progressPhotos: 'id, date, pose',
+        proteinEntries: 'id, date',
+        settings: 'key',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('workoutExercises')
+          .toCollection()
+          .modify((we: { completionStatus?: string }) => {
+            if (we.completionStatus == null) we.completionStatus = 'planned';
+          });
+      });
   }
 }
 

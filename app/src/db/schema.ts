@@ -1,5 +1,8 @@
 // Types de donnees. Source unique de verite (03-bookdev.md: "pas de type declare deux fois").
 
+import type { ExerciseCompletionStatus } from '../domain/workout-exercise-status';
+export type { ExerciseCompletionStatus };
+
 export type MuscleGroup =
   | 'quadriceps'
   | 'ischios'
@@ -116,6 +119,7 @@ export interface WorkoutExercise extends Common {
   machineSettings: string;
   sessionRpe: SessionRpe | null;
   note: string;
+  completionStatus: ExerciseCompletionStatus;
 }
 
 export interface SetLog extends Common {
@@ -181,4 +185,5 @@ export const SETTINGS_KEYS = {
   storagePersisted: 'storagePersisted',
   lastSyncedAt: 'lastSyncedAt',
   lastSyncStatus: 'lastSyncStatus',
+  dataReliabilityMigratedV1: 'dataReliabilityMigratedV1',
 } as const;
