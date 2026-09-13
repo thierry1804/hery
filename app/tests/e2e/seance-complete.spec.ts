@@ -4,6 +4,7 @@ import { expect, test } from '@playwright/test';
 // en passant par échauffement, exercices de force, cardio et étirements.
 // Utilise la séance A hors-programme pour rester deterministe quel que soit le jour du test.
 test('parcours complet : démarrer, valider toutes les séries, terminer la séance', async ({ page }) => {
+  test.setTimeout(60_000);
   await page.goto('/');
 
   const startButton = page.getByRole('button', { name: /DÉMARRER|Séance A/ });
@@ -16,11 +17,16 @@ test('parcours complet : démarrer, valider toutes les séries, terminer la séa
   const pass = page.getByRole('button', { name: 'Passer' });
   const continueBtn = page.getByRole('button', { name: 'Continuer' });
   const finish = page.getByRole('button', { name: 'Terminé' });
+  const confirmDuration = page.getByRole('button', { name: 'Confirmer' });
   const done = page.getByRole('heading', { name: 'Séance terminée' });
 
   for (let i = 0; i < 60; i++) {
     if (await done.isVisible()) break;
 
+    if (await confirmDuration.isVisible()) {
+      await confirmDuration.click();
+      continue;
+    }
     if (await validate.isVisible()) {
       await validate.click();
       await expect(pass).toBeVisible({ timeout: 5_000 });

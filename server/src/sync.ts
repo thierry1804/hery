@@ -8,10 +8,9 @@ import { SYNC_TABLE_NAMES, SYNC_TABLES, type SyncRow, type SyncTableName } from 
 export const syncRoutes = new Hono();
 
 function emptyChanges(): Record<SyncTableName, SyncRow[]> {
-  return Object.fromEntries(SYNC_TABLE_NAMES.map((name) => [name, []])) as Record<
-    SyncTableName,
-    SyncRow[]
-  >;
+  const changes = {} as Record<SyncTableName, SyncRow[]>;
+  for (const name of SYNC_TABLE_NAMES) changes[name] = [];
+  return changes;
 }
 
 syncRoutes.post('/push', async (c) => {
@@ -95,7 +94,7 @@ syncRoutes.get('/pull', async (c) => {
       .from(table)
       .where(and(eq(table.userId, userId), gt(table.updatedAt, since)));
 
-    changes[name] = rows.map((r: { payload: SyncRow }) => r.payload);
+    changes[name] = rows.map((row) => (row as { payload: SyncRow }).payload);
   }
 
   return c.json({ changes, serverTime: new Date().toISOString() });

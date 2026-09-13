@@ -8,20 +8,23 @@ import { migrateDataReliabilityV1 } from './db/migrate-reliability';
 import { migratePrV2 } from './db/migrate-pr-v2';
 import { migratePrV3 } from './db/migrate-pr-v3';
 
-void (async () => {
+async function bootstrap() {
   await seedIfNeeded();
   await migrateDataReliabilityV1();
   await migratePrV2();
   await migratePrV3();
-})();
-if (navigator.storage?.persist) {
-  void navigator.storage.persist();
+
+  if (navigator.storage?.persist) {
+    void navigator.storage.persist();
+  }
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <HashRouter>
+        <App />
+      </HashRouter>
+    </StrictMode>,
+  );
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <HashRouter>
-      <App />
-    </HashRouter>
-  </StrictMode>,
-);
+void bootstrap();

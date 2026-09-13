@@ -10,7 +10,10 @@ export default defineConfig({
     baseURL: 'http://localhost:5199',
     trace: 'retain-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'mobile-chromium', use: { ...devices['Pixel 7'] } },
+  ],
   webServer: {
     command: 'npm run dev -- --port 5199 --strictPort',
     url: 'http://localhost:5199',
