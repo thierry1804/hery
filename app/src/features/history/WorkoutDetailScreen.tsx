@@ -5,6 +5,7 @@ import {
   editSetLog,
   getWorkoutDetail,
   updateWorkoutTimes,
+  updateWorkoutRecovery,
   type WorkoutDetail,
 } from '../../repositories/workouts.repo';
 import { getExercisesByIds } from '../../repositories/exercises.repo';
@@ -40,6 +41,12 @@ export function WorkoutDetailScreen() {
   const [editStartedLocal, setEditStartedLocal] = useState('');
   const [editEndedLocal, setEditEndedLocal] = useState('');
   const [timeError, setTimeError] = useState<string | null>(null);
+  const [editingRecovery, setEditingRecovery] = useState(false);
+  const [editFatigue, setEditFatigue] = useState<number | null>(null);
+  const [editPain, setEditPain] = useState<number | null>(null);
+  const [editPainArea, setEditPainArea] = useState('');
+  const [editBodyweight, setEditBodyweight] = useState<number | null>(null);
+  const [editDeload, setEditDeload] = useState(false);
 
   const reload = async () => {
     const d = await getWorkoutDetail(workoutId);
@@ -155,6 +162,27 @@ export function WorkoutDetailScreen() {
           </button>
         )}
       </header>
+
+      <section className={styles.exerciseBlock} aria-label="Récupération">
+        <h2 className={styles.exerciseName}>Récupération</h2>
+        {editingRecovery ? (
+          <div className={styles.timeEditPanel}>
+            <label>Fatigue (1–5)<input type="number" min="1" max="5" value={editFatigue ?? ''} onChange={(event) => setEditFatigue(event.target.value ? Number(event.target.value) : null)} /></label>
+            <label>Douleur (0–10)<input type="number" min="0" max="10" value={editPain ?? ''} onChange={(event) => setEditPain(event.target.value ? Number(event.target.value) : null)} /></label>
+            <label>Zone douloureuse<input value={editPainArea} onChange={(event) => setEditPainArea(event.target.value)} /></label>
+            <label>Poids du jour<input type="number" min="20" max="300" step="0.1" value={editBodyweight ?? ''} onChange={(event) => setEditBodyweight(event.target.value ? Number(event.target.value) : null)} /></label>
+            <label><input type="checkbox" checked={editDeload} onChange={(event) => setEditDeload(event.target.checked)} /> Séance allégée / deload</label>
+            <BigButton variant="primary" onClick={() => void updateWorkoutRecovery(workoutId, { fatigueLevel: editFatigue, painLevel: editPain, painArea: editPainArea, bodyweightKg: editBodyweight, isDeload: editDeload }).then(async () => { setEditingRecovery(false); await reload(); })}>Enregistrer</BigButton>
+            <BigButton variant="ghost" onClick={() => setEditingRecovery(false)}>Annuler</BigButton>
+          </div>
+        ) : (
+          <>
+            <p className={styles.detailMeta}>Fatigue : {detail.workout.fatigueLevel ?? 'non renseignée'} · Douleur : {detail.workout.painLevel ?? 'non renseignée'}{detail.workout.painArea ? ` (${detail.workout.painArea})` : ''}</p>
+            <p className={styles.detailMeta}>Poids : {detail.workout.bodyweightKg != null ? `${detail.workout.bodyweightKg} kg` : 'non renseigné'}{detail.workout.isDeload ? ' · séance allégée' : ''}</p>
+            <button type="button" className={styles.correctTimes} onClick={() => { setEditFatigue(detail.workout.fatigueLevel ?? null); setEditPain(detail.workout.painLevel ?? null); setEditPainArea(detail.workout.painArea ?? ''); setEditBodyweight(detail.workout.bodyweightKg); setEditDeload(detail.workout.isDeload ?? false); setEditingRecovery(true); }}>Corriger la récupération</button>
+          </>
+        )}
+      </section>
 
       {detail.exercises.map(({ workoutExercise, sets }) => {
         const status = workoutExercise.completionStatus;

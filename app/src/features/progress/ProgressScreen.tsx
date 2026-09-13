@@ -9,6 +9,8 @@ import { RecentPrsList } from './RecentPrsList';
 import { StreakSummary } from './StreakSummary';
 import { WeekSummary } from './WeekSummary';
 import { WeekTonnageBars } from './WeekTonnageBars';
+import { CoachSuggestions } from './CoachSuggestions';
+import { MuscleVolumeWindows } from './MuscleVolumeWindows';
 import styles from './ProgressScreen.module.css';
 
 const EMPTY_SNAPSHOT: ProgressSnapshot = {
@@ -20,6 +22,8 @@ const EMPTY_SNAPSHOT: ProgressSnapshot = {
   lifts: [],
   muscleBalance: [],
   muscleFatigue: [],
+  muscleVolumeWindows: [],
+  coachSuggestions: [],
   streak: { currentStreakWeeks: 0, activeDaysThisMonth: 0 },
   exerciseHistories: [],
 };
@@ -57,6 +61,16 @@ export function ProgressScreen() {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Tonnage — 4 semaines</h2>
             <WeekTonnageBars bars={snapshot.weekBars} />
+          </section>
+
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Coach — prochaine séance</h2>
+            <CoachSuggestions suggestions={snapshot.coachSuggestions} />
+          </section>
+
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Volume musculaire — 7 / 28 jours</h2>
+            <MuscleVolumeWindows volumes={snapshot.muscleVolumeWindows} />
           </section>
 
           <section className={styles.section}>

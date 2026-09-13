@@ -1,5 +1,6 @@
 import { toDateStr } from '../lib/date';
 import type { MuscleGroup } from '../db/schema';
+import type { CoachSuggestion } from './coach';
 
 export const WEEK_SESSION_TARGET = 3;
 
@@ -50,6 +51,11 @@ export interface ExerciseSessionLift {
   repsAtMax: number;
   tonnageKg: number;
   maxE1rm: number | null;
+  workSetReps?: number[];
+  repsTarget?: number | null;
+  setsTarget?: number | null;
+  averageRir?: number | null;
+  isDeload?: boolean;
   hadPr: boolean;
   latestPrAt: string | null;
 }
@@ -60,6 +66,14 @@ export type TrendWeeks = 4 | 8 | 12;
 export interface MuscleVolume {
   muscle: MuscleGroup;
   tonnageKg: number;
+}
+
+export interface MuscleVolumeWindow {
+  muscle: MuscleGroup;
+  sets7d: number;
+  sets28d: number;
+  weeklyAverage28d: number;
+  status: 'under' | 'balanced' | 'over';
 }
 
 export interface StreakStats {
@@ -88,6 +102,8 @@ export interface ProgressSnapshot {
   lifts: LiftRow[];
   muscleBalance: MuscleVolume[];
   muscleFatigue: MuscleFatigue[];
+  muscleVolumeWindows: MuscleVolumeWindow[];
+  coachSuggestions: CoachSuggestion[];
   streak: StreakStats;
   exerciseHistories: ExerciseHistory[];
 }

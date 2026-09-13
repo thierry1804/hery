@@ -444,3 +444,9 @@
   color: var(--laiton, #c4a35a);
   font-size: var(--fs-14);
 }
+.recoveryForm { display: grid; gap: 8px; width: min(100%, 360px); margin: 18px auto; text-align: left; }
+.recoveryForm p { margin: 4px 0 0; font-weight: 700; }
+.recoveryForm input[type='number'], .recoveryForm input[type='text'], .recoveryForm input:not([type]) { width: 100%; box-sizing: border-box; padding: 10px; }
+.recoveryChoices { display: flex; gap: 8px; }
+.recoveryChoices button { min-width: 56px; min-height: 56px; border: 1px solid var(--fonte-500); border-radius: var(--radius-button); background: var(--fonte-700); color: inherit; }
+.recoveryChoices button[aria-pressed='true'] { border-color: var(--laiton); color: var(--laiton); }

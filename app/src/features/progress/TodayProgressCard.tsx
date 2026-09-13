@@ -22,6 +22,8 @@ export function TodayProgressCard() {
           lifts: [],
           muscleBalance: [],
           muscleFatigue: [],
+          muscleVolumeWindows: [],
+          coachSuggestions: [],
           streak: { currentStreakWeeks: 0, activeDaysThisMonth: 0 },
           exerciseHistories: [],
         }),

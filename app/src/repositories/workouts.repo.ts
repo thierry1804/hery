@@ -51,6 +51,10 @@ export async function startWorkout(
     endedAt: null,
     status: 'in_progress',
     bodyweightKg: null,
+    fatigueLevel: null,
+    painLevel: null,
+    painArea: '',
+    isDeload: false,
     totalTonnageKg: 0,
     notes: '',
     createdAt: ts,
@@ -246,15 +250,22 @@ export async function logSet(input: LogSetInput): Promise<SetLog> {
 
 export async function countPriorCompletedSessions(
   exerciseId: string,
-  excludeWorkoutId: string,
+  currentWorkoutId: string,
 ): Promise<number> {
+  const currentWorkout = await db.workouts.get(currentWorkoutId);
+  if (!currentWorkout) return 0;
   const workoutExercises = (await db.workoutExercises.where('exerciseId').equals(exerciseId).toArray()).filter(
-    (we) => we.deletedAt == null && we.workoutId !== excludeWorkoutId,
+    (we) => we.deletedAt == null && we.workoutId !== currentWorkoutId,
   );
   const completedIds = new Set<string>();
   for (const we of workoutExercises) {
     const workout = await db.workouts.get(we.workoutId);
-    if (!workout || workout.deletedAt != null || workout.status !== 'completed') continue;
+    if (
+      !workout ||
+      workout.deletedAt != null ||
+      workout.status !== 'completed' ||
+      compareWorkoutChronology(workout, currentWorkout) >= 0
+    ) continue;
     const sets = await getSetLogs(we.id);
     const hasWork = sets.some((s) => !s.isWarmup && s.reps != null && s.reps >= 1);
     if (hasWork) completedIds.add(we.workoutId);
@@ -269,33 +280,48 @@ export async function recomputePrForExerciseChronologically(exerciseId: string):
     (we) => we.deletedAt == null,
   );
 
-  type Row = { set: SetLog; workoutId: string };
+  type Row = { set: SetLog; workout: Workout };
   const rows: Row[] = [];
   for (const we of workoutExercises) {
+    const workout = await db.workouts.get(we.workoutId);
     const sets = await getSetLogs(we.id);
+    if (!workout || workout.deletedAt != null || workout.status === 'abandoned') {
+      for (const set of sets) {
+        await db.setLogs.update(set.id, { isPR: false, prKinds: [], updatedAt: nowIso() });
+      }
+      continue;
+    }
     for (const set of sets) {
-      rows.push({ set, workoutId: we.workoutId });
+      rows.push({ set, workout });
     }
   }
-  rows.sort((a, b) => (a.set.completedAt < b.set.completedAt ? -1 : 1));
+  rows.sort((a, b) => {
+    const workoutOrder = compareWorkoutChronology(a.workout, b.workout);
+    return workoutOrder !== 0 ? workoutOrder : a.set.completedAt.localeCompare(b.set.completedAt);
+  });
 
   const priorWorking: Array<{
     weightKg: number | null;
     reps: number | null;
     e1rm: number | null;
     isWarmup: boolean;
+    workoutId: string;
+    workoutStatus: Workout['status'];
   }> = [];
 
-  for (const { set, workoutId } of rows) {
+  for (const { set, workout } of rows) {
     if (set.isWarmup || set.reps == null || set.reps < 1) {
       await db.setLogs.update(set.id, { isPR: false, prKinds: [], updatedAt: nowIso() });
       continue;
     }
-    const priorCount = await countPriorCompletedSessions(exerciseId, workoutId);
+    const priorCount = await countPriorCompletedSessions(exerciseId, workout.id);
     const e1rm = set.isWarmup ? null : calculateE1rm(set.weightKg, set.reps);
+    const eligiblePriorSets = priorWorking.filter(
+      (prior) => prior.workoutStatus === 'completed' || prior.workoutId === workout.id,
+    );
     const prKinds = detectPrKinds(
       { weightKg: set.weightKg, reps: set.reps, e1rm, isWarmup: set.isWarmup },
-      priorWorking,
+      eligiblePriorSets,
       { priorCompletedSessionCount: priorCount, unilateral },
     );
     await db.setLogs.update(set.id, {
@@ -309,6 +335,8 @@ export async function recomputePrForExerciseChronologically(exerciseId: string):
       reps: set.reps,
       e1rm,
       isWarmup: set.isWarmup,
+      workoutId: workout.id,
+      workoutStatus: workout.status,
     });
   }
 }
@@ -342,15 +370,49 @@ export async function getLastWorkRir(
 }
 
 async function getPriorSetsForExercise(exerciseId: string, _currentWorkoutExerciseId: string) {
+  const currentWe = await db.workoutExercises.get(_currentWorkoutExerciseId);
+  const currentWorkout = currentWe ? await db.workouts.get(currentWe.workoutId) : undefined;
+  if (!currentWe || !currentWorkout) return [];
   const workoutExercises = (await db.workoutExercises.where('exerciseId').equals(exerciseId).toArray()).filter(
     (we) => we.deletedAt == null,
   );
   const allSets: SetLog[] = [];
   for (const we of workoutExercises) {
+    const workout = await db.workouts.get(we.workoutId);
+    const isCurrentWorkout = we.workoutId === currentWe.workoutId;
+    const isPriorCompleted =
+      workout?.deletedAt == null &&
+      workout?.status === 'completed' &&
+      compareWorkoutChronology(workout, currentWorkout) < 0;
+    if (!isCurrentWorkout && !isPriorCompleted) continue;
     const sets = await getSetLogs(we.id);
     allSets.push(...sets);
   }
   return allSets;
+}
+
+export async function updateWorkoutRecovery(
+  workoutId: string,
+  recovery: Pick<Workout, 'fatigueLevel' | 'painLevel' | 'painArea' | 'isDeload' | 'bodyweightKg'>,
+): Promise<void> {
+  if (recovery.fatigueLevel != null && (recovery.fatigueLevel < 1 || recovery.fatigueLevel > 5)) {
+    throw new Error('fatigueLevel must be between 1 and 5');
+  }
+  if (recovery.painLevel != null && (recovery.painLevel < 0 || recovery.painLevel > 10)) {
+    throw new Error('painLevel must be between 0 and 10');
+  }
+  if (recovery.bodyweightKg != null && (recovery.bodyweightKg < 20 || recovery.bodyweightKg > 300)) {
+    throw new Error('bodyweightKg must be between 20 and 300');
+  }
+  await db.workouts.update(workoutId, { ...recovery, updatedAt: nowIso() });
+}
+
+function compareWorkoutChronology(a: Workout, b: Workout): number {
+  if (a.date !== b.date) return a.date.localeCompare(b.date);
+  const aTimestamp = a.startedAt ?? a.endedAt ?? a.createdAt;
+  const bTimestamp = b.startedAt ?? b.endedAt ?? b.createdAt;
+  if (aTimestamp !== bTimestamp) return aTimestamp.localeCompare(bTimestamp);
+  return a.id.localeCompare(b.id);
 }
 
 export async function recomputeWorkoutTonnage(workoutId: string): Promise<number> {
@@ -389,7 +451,20 @@ export async function removeSet(setLogId: string): Promise<void> {
   await db.setLogs.update(setLogId, { deletedAt: nowIso(), updatedAt: nowIso() });
   if (!set) return;
   const we = await db.workoutExercises.get(set.workoutExerciseId);
-  if (we) await recomputeWorkoutTonnage(we.workoutId);
+  if (we) {
+    await recomputeWorkoutTonnage(we.workoutId);
+    await recomputePrForExerciseChronologically(we.exerciseId);
+    const remainingSets = await getSetLogs(we.id);
+    const completionStatus =
+      we.completionStatus === 'skipped'
+        ? 'skipped'
+        : remainingSets.length === 0
+          ? 'planned'
+          : we.completionStatus === 'completed'
+            ? 'completed'
+            : 'started';
+    await db.workoutExercises.update(we.id, { completionStatus, updatedAt: nowIso() });
+  }
 }
 
 // RG-12: correction a posteriori journalisee.
@@ -483,9 +558,10 @@ export async function addCardioLog(
 export async function completeWorkout(workoutId: string): Promise<void> {
   const tonnage = await recomputeWorkoutTonnage(workoutId);
   const ts = nowIso();
+  const workout = await db.workouts.get(workoutId);
   await db.workouts.update(workoutId, {
     status: 'completed',
-    endedAt: ts,
+    endedAt: workout?.endedAt ?? ts,
     totalTonnageKg: tonnage,
     updatedAt: ts,
   });

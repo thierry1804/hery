@@ -17,6 +17,7 @@ import {
   updateWorkoutExercise,
   updateWorkoutItemPrescription,
   updateWorkoutTimes,
+  updateWorkoutRecovery,
 } from '../../repositories/workouts.repo';
 import { isImplausibleDuration, workoutDurationSec } from '../../domain/tonnage';
 import type { SetKind } from '../../domain/set-kind';
@@ -40,6 +41,7 @@ import { useSessionStore } from './session.store';
 import { confirmSetFeedback } from '../../lib/haptics';
 import { FlameIcon, HeartIcon, PencilIcon, StretchIcon, SwapIcon, UndoIcon } from '../../ui/icons';
 import styles from './ActiveSessionScreen.module.css';
+import { getAcceptedCoachTarget } from '../../repositories/coach-target.repo';
 
 type Step =
   | { kind: 'warmup'; items: PrescribedItem[] }
@@ -236,6 +238,7 @@ export function ActiveSessionScreen() {
       const isWeight = !exercise || exercise.loadType === 'weight';
 
       const last = await getLastCompletedSets(exId, workoutId);
+      const coachTargetKg = await getAcceptedCoachTarget(exId);
       if (last.length > 0) {
         const first = last[0]!;
         setLastSetsText(
@@ -257,7 +260,7 @@ export function ActiveSessionScreen() {
       } else {
         const refSet =
           last.find((s) => s.index === setIndex) ?? last[last.length - 1] ?? sets[sets.length - 1];
-        setWeightKg(refSet?.weightKg ?? starterWeight);
+        setWeightKg(coachTargetKg ?? refSet?.weightKg ?? starterWeight);
         setReps(refSet?.reps ?? item.repsTarget ?? 10);
       }
     })();
@@ -267,7 +270,7 @@ export function ActiveSessionScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemIndex, setIndex, subIndex, currentExerciseId, exercisesById]);
 
-  if (finished) return <FinishedView onDone={() => navigate('/')} />;
+  if (finished) return <FinishedView workoutId={workoutId} onDone={() => navigate('/')} />;
   if (!workout || !step) {
     return (
       <div className={styles.screen} aria-busy="true">
@@ -914,16 +917,41 @@ function CardioBlock({
   );
 }
 
-function FinishedView({ onDone }: { onDone: () => void }) {
+function FinishedView({ workoutId, onDone }: { workoutId: string; onDone: () => void }) {
+  const [fatigueLevel, setFatigueLevel] = useState<number | null>(null);
+  const [painLevel, setPainLevel] = useState<number | null>(null);
+  const [painArea, setPainArea] = useState('');
+  const [bodyweightKg, setBodyweightKg] = useState<number | null>(null);
+  const [isDeload, setIsDeload] = useState(false);
+
+  const saveAndClose = async () => {
+    await updateWorkoutRecovery(workoutId, { fatigueLevel, painLevel, painArea, bodyweightKg, isDeload });
+    onDone();
+  };
   return (
     <div className={styles.screen}>
       <div className={styles.finished}>
         <h1 className={styles.exerciseName}>Séance terminée</h1>
         <p className={styles.lastTime}>Enregistrée sur cet appareil.</p>
-        <BigButton variant="primary" onClick={onDone}>
+        <div className={styles.recoveryForm}>
+          <p>Fatigue ressentie</p>
+          <ChoiceRow values={[1, 2, 3, 4, 5]} selected={fatigueLevel} onSelect={setFatigueLevel} />
+          <p>Douleur</p>
+          <ChoiceRow values={[0, 2, 5, 8]} selected={painLevel} onSelect={setPainLevel} />
+          {painLevel != null && painLevel > 0 ? (
+            <input aria-label="Zone douloureuse" placeholder="Zone douloureuse (optionnel)" value={painArea} onChange={(event) => setPainArea(event.target.value)} />
+          ) : null}
+          <label>Poids du jour (optionnel)<input type="number" min="20" max="300" step="0.1" value={bodyweightKg ?? ''} onChange={(event) => setBodyweightKg(event.target.value ? Number(event.target.value) : null)} /></label>
+          <label><input type="checkbox" checked={isDeload} onChange={(event) => setIsDeload(event.target.checked)} /> Séance allégée / deload</label>
+        </div>
+        <BigButton variant="primary" onClick={() => void saveAndClose()}>
           Retour à l&apos;accueil
         </BigButton>
       </div>
     </div>
   );
+}
+
+function ChoiceRow({ values, selected, onSelect }: { values: number[]; selected: number | null; onSelect: (value: number | null) => void }) {
+  return <div className={styles.recoveryChoices}>{values.map((value) => <button type="button" key={value} aria-pressed={selected === value} onClick={() => onSelect(selected === value ? null : value)}>{value}</button>)}</div>;
 }

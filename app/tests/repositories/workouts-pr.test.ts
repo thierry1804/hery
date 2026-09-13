@@ -6,6 +6,8 @@ import {
   getOrCreateWorkoutExercise,
   logSet,
   startWorkout,
+  removeSet,
+  recomputePrForExerciseChronologically,
 } from '../../src/repositories/workouts.repo';
 import type { Exercise, SessionTemplate } from '../../src/db/schema';
 
@@ -127,5 +129,68 @@ describe('PR v2 repository', () => {
     await editSetLog(set.id, { weightKg: 40 });
     const updated = await db.setLogs.get(set.id);
     expect(updated?.isPR).toBe(false);
+  });
+
+  it('le replay ne traite pas les séances futures comme antérieures', async () => {
+    const firstId = await completedSession(50, 0);
+    await completedSession(55, 1);
+    await completedSession(60, 2);
+
+    await recomputePrForExerciseChronologically('ex-pr');
+
+    const firstWe = await db.workoutExercises.where('workoutId').equals(firstId).first();
+    const firstSet = firstWe ? await db.setLogs.where('workoutExerciseId').equals(firstWe.id).first() : undefined;
+    expect(firstSet?.isPR).toBe(false);
+  });
+
+  it('une séance abandonnée ne bloque pas un PR ultérieur', async () => {
+    await completedSession(50, 0);
+    await completedSession(55, 1);
+    const abandoned = await startWorkout(template('tpl-abandoned'), []);
+    await db.workouts.update(abandoned.id, { date: '2026-09-12' });
+    const abandonedWe = await getOrCreateWorkoutExercise(abandoned.id, 'ex-pr', 1, null);
+    await logSet({
+      workoutExerciseId: abandonedWe.id,
+      exerciseId: 'ex-pr',
+      index: 1,
+      weightKg: 100,
+      reps: 8,
+      durationSec: null,
+      setKind: 'work',
+      rir: 0,
+    });
+    await db.workouts.update(abandoned.id, { status: 'abandoned' });
+
+    const current = await startWorkout(template('tpl-after-abandoned'), []);
+    await db.workouts.update(current.id, { date: '2026-09-13' });
+    const currentWe = await getOrCreateWorkoutExercise(current.id, 'ex-pr', 1, null);
+    const set = await logSet({
+      workoutExerciseId: currentWe.id,
+      exerciseId: 'ex-pr',
+      index: 1,
+      weightKg: 60,
+      reps: 8,
+      durationSec: null,
+      setKind: 'work',
+      rir: 1,
+    });
+    expect(set.prKinds).toContain('weight');
+  });
+
+  it('supprimer un ancien record rejoue les PR suivants', async () => {
+    await completedSession(50, 0);
+    await completedSession(55, 1);
+    const recordWorkoutId = await completedSession(60, 2);
+    const laterWorkoutId = await completedSession(58, 3);
+    await recomputePrForExerciseChronologically('ex-pr');
+
+    const recordWe = await db.workoutExercises.where('workoutId').equals(recordWorkoutId).first();
+    const recordSet = recordWe ? await db.setLogs.where('workoutExerciseId').equals(recordWe.id).first() : undefined;
+    const laterWe = await db.workoutExercises.where('workoutId').equals(laterWorkoutId).first();
+    const laterSet = laterWe ? await db.setLogs.where('workoutExerciseId').equals(laterWe.id).first() : undefined;
+    expect(laterSet?.prKinds).not.toContain('weight');
+
+    await removeSet(recordSet!.id);
+    expect((await db.setLogs.get(laterSet!.id))?.prKinds).toContain('weight');
   });
 });

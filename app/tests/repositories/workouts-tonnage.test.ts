@@ -9,6 +9,7 @@ import {
   skipWorkoutExercise,
   startWorkout,
   updateWorkoutTimes,
+  completeWorkout,
 } from '../../src/repositories/workouts.repo';
 import type { Exercise, SessionTemplate } from '../../src/db/schema';
 
@@ -82,6 +83,7 @@ describe('workouts tonnage recompute', () => {
 
     await removeSet(set.id);
     expect((await db.workouts.get(workout.id))?.totalTonnageKg).toBe(0);
+    expect((await db.workoutExercises.get(we.id))?.completionStatus).toBe('planned');
   });
 
   it('exclut les warmups du tonnage', async () => {
@@ -155,5 +157,12 @@ describe('workouts status and times', () => {
     const w = await db.workouts.get(workout.id);
     expect(w?.startedAt).toBe('2026-09-13T10:00:00.000Z');
     expect(w?.endedAt).toBe('2026-09-13T11:00:00.000Z');
+  });
+
+  it('completeWorkout conserve une heure de fin corrigée', async () => {
+    const workout = await startWorkout(template(), []);
+    await updateWorkoutTimes(workout.id, '2026-09-13T10:00:00.000Z', '2026-09-13T11:00:00.000Z');
+    await completeWorkout(workout.id);
+    expect((await db.workouts.get(workout.id))?.endedAt).toBe('2026-09-13T11:00:00.000Z');
   });
 });

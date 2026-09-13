@@ -15,6 +15,7 @@ import {
   type RecentPr,
 } from '../domain/progress';
 import { toDateStr } from '../lib/date';
+import { evaluateCoach, type MuscleWeekVolume } from '../domain/coach';
 
 interface ExerciseLiftHistory {
   exerciseId: string;
@@ -122,6 +123,16 @@ export async function getProgressSnapshot(now: Date = new Date()): Promise<Progr
           const e1rms = weightSets.map((s) => s.e1rm).filter((v): v is number => v != null);
           return e1rms.length > 0 ? Math.max(...e1rms) : null;
         })(),
+        workSetReps: weightSets.map((setLog) => setLog.reps!),
+        repsTarget:
+          workout.templateSnapshot.find((item) => item.exerciseId === exerciseId)?.repsTarget ?? null,
+        setsTarget:
+          workout.templateSnapshot.find((item) => item.exerciseId === exerciseId)?.sets ?? null,
+        averageRir: (() => {
+          const values = weightSets.map((setLog) => setLog.rir).filter((value): value is number => value != null);
+          return values.length > 0 ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+        })(),
+        isDeload: workout.isDeload ?? false,
         hadPr: prSets.length > 0,
         latestPrAt,
       });
@@ -133,19 +144,42 @@ export async function getProgressSnapshot(now: Date = new Date()): Promise<Progr
   }
 
   const weekStart = toDateStr(startOfIsoWeek(now));
+  const previousWeekDate = new Date(startOfIsoWeek(now));
+  previousWeekDate.setDate(previousWeekDate.getDate() - 7);
+  const previousWeekStart = toDateStr(previousWeekDate);
+  const twoWeeksAgoDate = new Date(previousWeekDate);
+  twoWeeksAgoDate.setDate(twoWeeksAgoDate.getDate() - 7);
+  const twoWeeksAgoStart = toDateStr(twoWeeksAgoDate);
+  const cutoff7 = new Date(now);
+  cutoff7.setDate(cutoff7.getDate() - 6);
+  const cutoff28 = new Date(now);
+  cutoff28.setDate(cutoff28.getDate() - 27);
+  const cutoff7Str = toDateStr(cutoff7);
+  const cutoff28Str = toDateStr(cutoff28);
 
   const muscleContributions: { muscle: MuscleGroup; tonnageKg: number }[] = [];
+  const weightedSetContributions: { muscle: MuscleGroup; date: string; weight: number }[] = [];
   for (const setLog of setLogs) {
-    if (setLog.isWarmup || setLog.weightKg == null || setLog.reps == null) continue;
+    const isEffectiveWorkSet =
+      !setLog.isWarmup &&
+      ((setLog.reps != null && setLog.reps >= 1) || (setLog.durationSec != null && setLog.durationSec > 0));
+    if (!isEffectiveWorkSet) continue;
     const workoutExercise = workoutExerciseById.get(setLog.workoutExerciseId)!;
     const workout = completedWorkoutById.get(workoutExercise.workoutId)!;
-    if (workout.date < weekStart) continue;
     const exercise = exerciseById.get(workoutExercise.exerciseId);
     if (!exercise) continue;
-    const multiplier = exercise.unilateral ? 2 : 1;
-    const tonnageKg = setLog.weightKg * setLog.reps * multiplier;
+    if (workout.date >= weekStart && setLog.weightKg != null && setLog.reps != null) {
+      const multiplier = exercise.unilateral ? 2 : 1;
+      const tonnageKg = setLog.weightKg * setLog.reps * multiplier;
+      for (const muscle of exercise.primaryMuscles) {
+        muscleContributions.push({ muscle, tonnageKg });
+      }
+    }
     for (const muscle of exercise.primaryMuscles) {
-      muscleContributions.push({ muscle, tonnageKg });
+      weightedSetContributions.push({ muscle, date: workout.date, weight: 1 });
+    }
+    for (const muscle of exercise.secondaryMuscles) {
+      weightedSetContributions.push({ muscle, date: workout.date, weight: 0.5 });
     }
   }
 
@@ -193,6 +227,81 @@ export async function getProgressSnapshot(now: Date = new Date()): Promise<Progr
     }];
   });
 
+  const activeCycle = (await db.cycles.filter((cycle) => cycle.deletedAt == null && cycle.active).first()) ?? null;
+  const activeTemplateIds = activeCycle
+    ? new Set((await db.sessionTemplates.where('cycleId').equals(activeCycle.id).toArray()).filter((template) => template.deletedAt == null).map((template) => template.id))
+    : new Set<string>();
+  const activeExerciseIds = new Set(
+    (await db.prescribedItems.toArray())
+      .filter((item) => item.deletedAt == null && item.exerciseId != null && activeTemplateIds.has(item.sessionTemplateId))
+      .map((item) => item.exerciseId!),
+  );
+  const programMuscles = allExercises
+    .filter((exercise) => activeExerciseIds.has(exercise.id))
+    .flatMap((exercise) => [...exercise.primaryMuscles, ...exercise.secondaryMuscles]);
+  const muscleIds = [...new Set([...programMuscles, ...weightedSetContributions.map((row) => row.muscle)])];
+  const muscleVolumeWindows = muscleIds.map((muscle) => {
+    const rows = weightedSetContributions.filter((row) => row.muscle === muscle);
+    const sets7d = rows.filter((row) => row.date >= cutoff7Str).reduce((sum, row) => sum + row.weight, 0);
+    const sets28d = rows.filter((row) => row.date >= cutoff28Str).reduce((sum, row) => sum + row.weight, 0);
+    const weeklyAverage28d = sets28d / 4;
+    return {
+      muscle,
+      sets7d,
+      sets28d,
+      weeklyAverage28d,
+      status: weeklyAverage28d < 8 ? 'under' as const : weeklyAverage28d > 20 ? 'over' as const : 'balanced' as const,
+    };
+  }).sort((a, b) => b.sets28d - a.sets28d);
+
+  const muscleWeekVolumes: MuscleWeekVolume[] = muscleIds.map((muscle) => {
+    const rows = weightedSetContributions.filter((row) => row.muscle === muscle);
+    return {
+      muscle,
+      currentWeekSets: rows.filter((row) => row.date >= previousWeekStart && row.date < weekStart).reduce((sum, row) => sum + row.weight, 0),
+      previousWeekSets: rows.filter((row) => row.date >= twoWeeksAgoStart && row.date < previousWeekStart).reduce((sum, row) => sum + row.weight, 0),
+      fourWeekAverageSets: rows.filter((row) => row.date >= cutoff28Str).reduce((sum, row) => sum + row.weight, 0) / 4,
+    };
+  });
+
+  let phase = null as import('../db/schema').PhaseCode | null;
+  let phaseChanged = false;
+  if (activeCycle) {
+    const elapsedWeeks = Math.max(1, Math.floor((now.getTime() - new Date(`${activeCycle.startDate}T12:00:00`).getTime()) / (7 * 86400000)) + 1);
+    const currentPhase = activeCycle.phases.find((candidate) => elapsedWeeks >= candidate.fromWeek && elapsedWeeks <= candidate.toWeek);
+    phase = currentPhase?.code ?? null;
+    phaseChanged = currentPhase != null && !completedWorkouts.some((workout) => {
+      const workoutWeek = Math.max(1, Math.floor((new Date(`${workout.date}T12:00:00`).getTime() - new Date(`${activeCycle.startDate}T12:00:00`).getTime()) / (7 * 86400000)) + 1);
+      return workoutWeek >= currentPhase.fromWeek && workoutWeek <= currentPhase.toWeek;
+    });
+  }
+  const recentRecovery = completedWorkouts
+    .filter((workout) => workout.date >= cutoff28Str)
+    .sort(compareWorkouts)
+    .slice(-3);
+  const coachSuggestions = evaluateCoach({
+    phase,
+    phaseChanged,
+    exercises: histories.map((history) => ({
+      exerciseId: history.exerciseId,
+      name: history.name,
+      incrementKg: exerciseById.get(history.exerciseId)?.defaultIncrementKg ?? 2.5,
+      sessions: history.sessions.map((session) => ({
+        date: session.workoutDate,
+        maxWeightKg: session.maxWeightKg,
+        maxE1rm: session.maxE1rm,
+        workSetReps: session.workSetReps ?? [],
+        repsTarget: session.repsTarget ?? null,
+        setsTarget: session.setsTarget ?? null,
+        averageRir: session.averageRir ?? null,
+        isDeload: session.isDeload ?? false,
+      })),
+    })),
+    muscleVolumes: muscleWeekVolumes,
+    recentFatigueLevels: recentRecovery.map((workout) => workout.fatigueLevel).filter((value): value is number => value != null),
+    recentPainLevels: recentRecovery.map((workout) => workout.painLevel).filter((value): value is number => value != null),
+  });
+
   return {
     hasAnyCompletedWorkout: completedWorkouts.length > 0,
     week: summarizeWeek(completedWorkouts, prCount, now),
@@ -202,6 +311,8 @@ export async function getProgressSnapshot(now: Date = new Date()): Promise<Progr
     lifts: buildLifts(histories),
     muscleBalance: buildMuscleBalance(muscleContributions),
     muscleFatigue: buildMuscleFatigue(fatigueContributions),
+    muscleVolumeWindows,
+    coachSuggestions,
     streak: buildStreakStats(workouts, now),
     exerciseHistories: histories,
   };

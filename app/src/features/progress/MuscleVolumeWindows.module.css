@@ -1,0 +1,8 @@
+.list { display: grid; gap: 8px; }
+.row { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; padding: 9px 0; border-bottom: 1px solid var(--fonte-500); }
+.values { font-variant-numeric: tabular-nums; }
+.status { grid-column: 1 / -1; font-size: 12px; }
+.under { color: var(--fonte-300); }
+.over { color: #c85b4b; }
+.balanced { color: var(--laiton); }
+.empty { color: var(--fonte-300); }

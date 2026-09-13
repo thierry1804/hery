@@ -109,6 +109,10 @@ export interface Workout extends Common {
   endedAt: string | null;
   status: WorkoutStatus;
   bodyweightKg: number | null;
+  fatigueLevel: number | null;
+  painLevel: number | null;
+  painArea: string;
+  isDeload: boolean;
   totalTonnageKg: number;
   notes: string;
 }
@@ -190,4 +194,5 @@ export const SETTINGS_KEYS = {
   lastSyncStatus: 'lastSyncStatus',
   dataReliabilityMigratedV1: 'dataReliabilityMigratedV1',
   prRulesMigratedV2: 'prRulesMigratedV2',
+  prRulesMigratedV3: 'prRulesMigratedV3',
 } as const;

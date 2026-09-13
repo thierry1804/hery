@@ -6,11 +6,13 @@ import App from './App.tsx';
 import { seedIfNeeded } from './db/seed';
 import { migrateDataReliabilityV1 } from './db/migrate-reliability';
 import { migratePrV2 } from './db/migrate-pr-v2';
+import { migratePrV3 } from './db/migrate-pr-v3';
 
 void (async () => {
   await seedIfNeeded();
   await migrateDataReliabilityV1();
   await migratePrV2();
+  await migratePrV3();
 })();
 if (navigator.storage?.persist) {
   void navigator.storage.persist();
