@@ -71,7 +71,8 @@ describe('workouts tonnage recompute', () => {
       weightKg: 100,
       reps: 10,
       durationSec: null,
-      isWarmup: false,
+      setKind: 'work',
+      rir: null,
     });
     expect((await db.workouts.get(workout.id))?.totalTonnageKg).toBe(1000);
     expect((await db.workoutExercises.get(we.id))?.completionStatus).toBe('started');
@@ -93,7 +94,8 @@ describe('workouts tonnage recompute', () => {
       weightKg: 50,
       reps: 10,
       durationSec: null,
-      isWarmup: true,
+      setKind: 'warmup',
+      rir: null,
     });
     expect((await db.workouts.get(workout.id))?.totalTonnageKg).toBe(0);
   });
@@ -108,7 +110,8 @@ describe('workouts tonnage recompute', () => {
       weightKg: 20,
       reps: 8,
       durationSec: null,
-      isWarmup: false,
+      setKind: 'work',
+      rir: null,
     });
     expect((await db.workouts.get(workout.id))?.totalTonnageKg).toBe(320);
   });
@@ -132,7 +135,8 @@ describe('workouts status and times', () => {
       weightKg: 60,
       reps: 8,
       durationSec: null,
-      isWarmup: false,
+      setKind: 'work',
+      rir: null,
     });
     await markExerciseCompleted(we.id);
     expect((await db.workoutExercises.get(we.id))?.completionStatus).toBe('completed');

@@ -10,6 +10,7 @@ import {
   statusAfterLogSet,
   statusAfterSkip,
 } from '../domain/workout-exercise-status';
+import { isWarmupFromKind, normalizeRir, type SetKind } from '../domain/set-kind';
 import type {
   CardioLog,
   PrescribedItem,
@@ -188,14 +189,18 @@ interface LogSetInput {
   weightKg: number | null;
   reps: number | null;
   durationSec: number | null;
-  isWarmup: boolean;
+  setKind: SetKind;
+  rir: number | null;
 }
 
 export async function logSet(input: LogSetInput): Promise<SetLog> {
+  const setKind = input.setKind;
+  const isWarmup = isWarmupFromKind(setKind);
+  const rir = normalizeRir(setKind, input.rir);
   const priorSets = await getPriorSetsForExercise(input.exerciseId, input.workoutExerciseId);
-  const e1rm = input.isWarmup ? null : calculateE1rm(input.weightKg, input.reps);
+  const e1rm = isWarmup ? null : calculateE1rm(input.weightKg, input.reps);
   const prKinds = detectPrKinds(
-    { weightKg: input.weightKg, reps: input.reps, e1rm, isWarmup: input.isWarmup },
+    { weightKg: input.weightKg, reps: input.reps, e1rm, isWarmup },
     priorSets,
   );
 
@@ -207,10 +212,11 @@ export async function logSet(input: LogSetInput): Promise<SetLog> {
     weightKg: input.weightKg,
     reps: input.reps,
     durationSec: input.durationSec,
-    rir: null,
+    rir,
     tempo: null,
     restActualSec: null,
-    isWarmup: input.isWarmup,
+    setKind,
+    isWarmup,
     e1rm,
     isPR: prKinds.length > 0,
     prKinds,
@@ -230,6 +236,34 @@ export async function logSet(input: LogSetInput): Promise<SetLog> {
     await recomputeWorkoutTonnage(we.workoutId);
   }
   return set;
+}
+
+export async function getLastWorkRir(
+  exerciseId: string,
+  excludeWorkoutExerciseId?: string,
+): Promise<number | null> {
+  const workoutExercises = (await db.workoutExercises.where('exerciseId').equals(exerciseId).toArray()).filter(
+    (we) => we.deletedAt == null && we.id !== excludeWorkoutExerciseId,
+  );
+  const withWorkouts = await Promise.all(
+    workoutExercises.map(async (we) => ({ we, workout: await db.workouts.get(we.workoutId) })),
+  );
+  const ordered = withWorkouts
+    .filter((x) => x.workout && x.workout.deletedAt == null)
+    .sort((a, b) => {
+      const aTs = a.workout!.endedAt ?? a.workout!.startedAt ?? a.workout!.updatedAt;
+      const bTs = b.workout!.endedAt ?? b.workout!.startedAt ?? b.workout!.updatedAt;
+      return aTs < bTs ? 1 : -1;
+    });
+
+  for (const { we } of ordered) {
+    const sets = await getSetLogs(we.id);
+    for (let i = sets.length - 1; i >= 0; i--) {
+      const s = sets[i]!;
+      if (s.setKind === 'work' && s.rir != null) return s.rir;
+    }
+  }
+  return null;
 }
 
 async function getPriorSetsForExercise(exerciseId: string, _currentWorkoutExerciseId: string) {
@@ -286,15 +320,21 @@ export async function removeSet(setLogId: string): Promise<void> {
 // RG-12: correction a posteriori journalisee.
 export async function editSetLog(
   setLogId: string,
-  patch: Partial<Pick<SetLog, 'weightKg' | 'reps' | 'durationSec'>>,
+  patch: Partial<Pick<SetLog, 'weightKg' | 'reps' | 'durationSec' | 'setKind' | 'rir'>>,
 ): Promise<void> {
   const set = await db.setLogs.get(setLogId);
   if (!set) return;
   const weightKg = patch.weightKg ?? set.weightKg;
   const reps = patch.reps ?? set.reps;
-  const e1rm = set.isWarmup ? null : calculateE1rm(weightKg, reps);
+  const setKind = patch.setKind ?? set.setKind ?? (set.isWarmup ? 'warmup' : 'work');
+  const isWarmup = isWarmupFromKind(setKind);
+  const rir = normalizeRir(setKind, patch.rir !== undefined ? patch.rir : set.rir);
+  const e1rm = isWarmup ? null : calculateE1rm(weightKg, reps);
   await db.setLogs.update(setLogId, {
     ...patch,
+    setKind,
+    isWarmup,
+    rir,
     e1rm,
     editedAt: nowIso(),
     updatedAt: nowIso(),

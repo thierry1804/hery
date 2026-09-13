@@ -78,6 +78,7 @@ describe('migrateDataReliabilityV1', () => {
       rir: null,
       tempo: null,
       restActualSec: null,
+      setKind: 'work',
       isWarmup: false,
       e1rm: null,
       isPR: false,

@@ -10,8 +10,10 @@ import {
 import { getExercisesByIds } from '../../repositories/exercises.repo';
 import { formatDateFr } from '../../lib/date';
 import { isImplausibleDuration, setCountsTowardTonnage, workoutDurationSec } from '../../domain/tonnage';
+import { formatSetRir, setKindShortLabel, type SetKind } from '../../domain/set-kind';
 import { Stepper } from '../../ui/Stepper';
 import { BigButton } from '../../ui/BigButton';
+import { EffortChips } from '../session/EffortChips';
 import styles from './HistoryScreen.module.css';
 
 function isoToLocalInput(iso: string): string {
@@ -32,6 +34,8 @@ export function WorkoutDetailScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editWeight, setEditWeight] = useState(0);
   const [editReps, setEditReps] = useState(0);
+  const [editSetKind, setEditSetKind] = useState<SetKind>('work');
+  const [editRir, setEditRir] = useState<number | null>(null);
   const [editingTimes, setEditingTimes] = useState(false);
   const [editStartedLocal, setEditStartedLocal] = useState('');
   const [editEndedLocal, setEditEndedLocal] = useState('');
@@ -163,6 +167,9 @@ export function WorkoutDetailScreen() {
               {statusLabel ? <span className={styles.statusLabel}> · {statusLabel}</span> : null}
             </h2>
             {sets.map((s) => {
+              const kind = s.setKind ?? (s.isWarmup ? 'warmup' : 'work');
+              const kindLabel = setKindShortLabel(kind);
+              const rirLabel = formatSetRir(s.rir);
               const incomplete =
                 !s.isWarmup &&
                 !setCountsTowardTonnage(s) &&
@@ -171,10 +178,21 @@ export function WorkoutDetailScreen() {
                 <div key={s.id} className={styles.editPanel}>
                   <Stepper value={editWeight} step={2.5} unit="kg" fontSizePx={28} decimals={1} onChange={setEditWeight} />
                   <Stepper value={editReps} step={1} unit="reps" fontSizePx={20} onChange={setEditReps} />
+                  <EffortChips
+                    setKind={editSetKind}
+                    onSetKindChange={setEditSetKind}
+                    rir={editRir}
+                    onRirChange={setEditRir}
+                  />
                   <BigButton
                     variant="primary"
                     onClick={() =>
-                      void editSetLog(s.id, { weightKg: editWeight, reps: editReps }).then(() => {
+                      void editSetLog(s.id, {
+                        weightKg: editWeight,
+                        reps: editReps,
+                        setKind: editSetKind,
+                        rir: editRir,
+                      }).then(() => {
                         setEditingId(null);
                         void reload();
                       })
@@ -195,10 +213,14 @@ export function WorkoutDetailScreen() {
                     setEditingId(s.id);
                     setEditWeight(s.weightKg ?? 0);
                     setEditReps(s.reps ?? 0);
+                    setEditSetKind(kind);
+                    setEditRir(s.rir);
                   }}
                 >
                   <span className={styles.setText}>
                     Série {s.index} — {s.reps} × {s.weightKg} kg
+                    {kindLabel ? ` · ${kindLabel}` : ''}
+                    {rirLabel ? ` · ${rirLabel}` : ''}
                     {s.isPR ? <span className={styles.pr}> · Record</span> : null}
                     {s.editedAt ? ' · corrigée' : null}
                     {incomplete ? ' · série incomplète (exclue des stats)' : null}

@@ -118,7 +118,7 @@
 - `RG-08` Le timer de repos est piloté par un **timestamp de fin** persisté, jamais par un compteur en mémoire.
 - `RG-09` Une séance sans activité depuis plus de 6 h passe automatiquement en `abandonnée` mais reste consultable et reprenable pendant 24 h.
 - `RG-10` Une substitution conserve la traçabilité : `substitutedFromId` référence l'exercice initialement prescrit.
-- `RG-11` Le RPE est demandé **une seule fois par exercice**, après la dernière série. Mapping : `Facile` → 6, `Correct` → 8, `À fond` → 9,5. Le RIR est dérivé : `RIR = 10 − RPE`.
+- `RG-11` Le RIR est saisi **par série de travail**, optionnel, prérempli avec la dernière valeur du même exercice. Valeurs : 0, 1, 2, 3+ (stocké comme 3). Les séries `warmup` et `approach` n'ont pas de RIR. Le RPE de fin d'exercice (`sessionRpe`) n'est pas exigé pour la V1 effort.
 
 ### D4 — Journal
 

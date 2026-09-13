@@ -5,6 +5,7 @@ import {
   addCardioLog,
   completeWorkout,
   getLastCompletedSets,
+  getLastWorkRir,
   getOrCreateWorkoutExercise,
   getSetLogs,
   getWorkout,
@@ -18,7 +19,9 @@ import {
   updateWorkoutTimes,
 } from '../../repositories/workouts.repo';
 import { isImplausibleDuration, workoutDurationSec } from '../../domain/tonnage';
+import type { SetKind } from '../../domain/set-kind';
 import { Sheet } from '../../ui/Sheet';
+import { EffortChips } from './EffortChips';
 import { getAllExercises } from '../../repositories/exercises.repo';
 import { ExercisePickerSheet } from '../program/ExercisePickerSheet';
 import { getTemplateById } from '../../repositories/program.repo';
@@ -120,6 +123,8 @@ export function ActiveSessionScreen() {
 
   const [weightKg, setWeightKg] = useState(0);
   const [reps, setReps] = useState(10);
+  const [setKind, setSetKind] = useState<SetKind>('work');
+  const [rir, setRir] = useState<number | null>(null);
 
   const [modality, setModality] = useState<CardioModality>('marche_inclinee');
   const [showSubstitute, setShowSubstitute] = useState(false);
@@ -221,6 +226,8 @@ export function ActiveSessionScreen() {
       setNote(we.note);
       const sets = await getSetLogs(we.id);
       setLoggedSets(sets);
+      setSetKind('work');
+      setRir(await getLastWorkRir(exId));
 
       const exercise = exercisesById.get(exId);
       const isWeight = !exercise || exercise.loadType === 'weight';
@@ -398,7 +405,8 @@ export function ActiveSessionScreen() {
       weightKg: isTime ? null : weightKg,
       reps: isTime ? null : reps,
       durationSec: isTime ? currentItem.durationSec ?? null : null,
-      isWarmup: false,
+      setKind,
+      rir,
     });
     confirmSetFeedback();
     const sets = await getSetLogs(weId);
@@ -634,6 +642,13 @@ export function ActiveSessionScreen() {
               </div>
             )}
           </div>
+
+          <EffortChips
+            setKind={setKind}
+            onSetKindChange={setSetKind}
+            rir={rir}
+            onRirChange={setRir}
+          />
 
           <div className={styles.actions}>
             <BigButton variant="primary" onClick={() => void handleValidate()}>

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { SetLog } from '../../db/schema';
+import { formatSetRir, setKindShortLabel } from '../../domain/set-kind';
 import { ChalkMark } from '../../ui/ChalkMark';
 import styles from './SetInput.module.css';
 
@@ -34,6 +35,9 @@ export function SetInput({ loggedSets, totalSets, activeIndex, unilateral }: Pro
         const log = loggedSets.find((s) => s.index === n);
         const isActive = n === activeIndex && !log;
         const isDone = !!log;
+        const kind = log ? (log.setKind ?? (log.isWarmup ? 'warmup' : 'work')) : null;
+        const kindLabel = kind ? setKindShortLabel(kind) : '';
+        const rirLabel = log ? formatSetRir(log.rir) : '';
         return (
           <div
             key={n}
@@ -56,6 +60,8 @@ export function SetInput({ loggedSets, totalSets, activeIndex, unilateral }: Pro
                 {log.durationSec != null
                   ? `${log.durationSec} s`
                   : `${log.reps}${unilateral ? ' /côté' : ''} × ${formatWeight(log.weightKg)} kg`}
+                {kindLabel ? ` · ${kindLabel}` : ''}
+                {rirLabel ? ` · ${rirLabel}` : ''}
                 {log.isPR ? <span className={styles.pr}> · Record</span> : null}
               </span>
             ) : isActive ? (

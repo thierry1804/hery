@@ -68,6 +68,32 @@ export class HeryDB extends Dexie {
             if (we.completionStatus == null) we.completionStatus = 'planned';
           });
       });
+
+    this.version(3)
+      .stores({
+        exercises: 'id, name, *primaryMuscles, equipment, updatedAt',
+        cycles: 'id, startDate, updatedAt',
+        sessionTemplates: 'id, cycleId, code, dayOfWeek, updatedAt',
+        prescribedItems: 'id, sessionTemplateId, [sessionTemplateId+order], exerciseId',
+        workouts: 'id, date, status, sessionTemplateId, updatedAt',
+        workoutExercises: 'id, workoutId, exerciseId, [workoutId+order]',
+        setLogs: 'id, workoutExerciseId, [workoutExerciseId+index], completedAt, isPR',
+        cardioLogs: 'id, workoutId, date',
+        bodyMetrics: 'id, date',
+        progressPhotos: 'id, date, pose',
+        proteinEntries: 'id, date',
+        settings: 'key',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('setLogs')
+          .toCollection()
+          .modify((s: { isWarmup?: boolean; setKind?: string }) => {
+            if (s.setKind == null) {
+              s.setKind = s.isWarmup ? 'warmup' : 'work';
+            }
+          });
+      });
   }
 }
 

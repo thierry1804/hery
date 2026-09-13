@@ -132,10 +132,11 @@ Toutes les entités portent :
 | `weightKg` | `number \| null` | `null` si `loadType` ≠ `weight` |
 | `reps` | `number \| null` | |
 | `durationSec` | `number \| null` | Gainage |
-| `rir` | `number \| null` | Dérivé du RPE d'exercice |
+| `rir` | `number \| null` | RIR saisi sur série `work` (0–3) ; `null` sinon (`RG-11`) |
 | `tempo` | `string \| null` | « 2-0-1-0 » — V1 |
 | `restActualSec` | `number \| null` | Mesuré — V1 |
-| `isWarmup` | `boolean` | Exclu du tonnage, du volume et des PR |
+| `setKind` | `'warmup' \| 'approach' \| 'work'` | Type de série ; `isWarmup` dérivé |
+| `isWarmup` | `boolean` | `true` si `setKind !== 'work'` — exclu du tonnage, du volume et des PR |
 | `e1rm` | `number \| null` | **Calculé à l'écriture, jamais recalculé** (`RG-14`) |
 | `isPR` | `boolean` | Calculé à l'écriture |
 | `prKinds` | `('weight' \| 'reps' \| 'e1rm' \| 'volume')[]` | |

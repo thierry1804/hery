@@ -1,7 +1,9 @@
 // Types de donnees. Source unique de verite (03-bookdev.md: "pas de type declare deux fois").
 
 import type { ExerciseCompletionStatus } from '../domain/workout-exercise-status';
+import type { SetKind } from '../domain/set-kind';
 export type { ExerciseCompletionStatus };
+export type { SetKind };
 
 export type MuscleGroup =
   | 'quadriceps'
@@ -131,6 +133,7 @@ export interface SetLog extends Common {
   rir: number | null;
   tempo: string | null;
   restActualSec: number | null;
+  setKind: SetKind;
   isWarmup: boolean;
   e1rm: number | null;
   isPR: boolean;
