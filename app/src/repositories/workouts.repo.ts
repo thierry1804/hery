@@ -11,6 +11,7 @@ import {
   statusAfterSkip,
 } from '../domain/workout-exercise-status';
 import { isWarmupFromKind, normalizeRir, type SetKind } from '../domain/set-kind';
+import { runSync } from '../sync/runSync';
 import type {
   CardioLog,
   PrescribedItem,
@@ -565,12 +566,12 @@ export async function completeWorkout(workoutId: string): Promise<void> {
     totalTonnageKg: tonnage,
     updatedAt: ts,
   });
-  void import('../sync/runSync').then((m) => m.runSync());
+  void runSync();
 }
 
 export async function abandonWorkout(workoutId: string): Promise<void> {
   await db.workouts.update(workoutId, { status: 'abandoned', updatedAt: nowIso() });
-  void import('../sync/runSync').then((m) => m.runSync());
+  void runSync();
 }
 
 export async function listWorkouts(): Promise<Workout[]> {
