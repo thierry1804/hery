@@ -189,4 +189,5 @@ export const SETTINGS_KEYS = {
   lastSyncedAt: 'lastSyncedAt',
   lastSyncStatus: 'lastSyncStatus',
   dataReliabilityMigratedV1: 'dataReliabilityMigratedV1',
+  prRulesMigratedV2: 'prRulesMigratedV2',
 } as const;

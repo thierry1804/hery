@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { CardioModality, Exercise, PrescribedItem, SetLog, Workout } from '../../db/schema';
+import type { CardioModality, Exercise, PrescribedItem, PrKind, SetLog, Workout } from '../../db/schema';
 import {
   addCardioLog,
   completeWorkout,
@@ -20,6 +20,7 @@ import {
 } from '../../repositories/workouts.repo';
 import { isImplausibleDuration, workoutDurationSec } from '../../domain/tonnage';
 import type { SetKind } from '../../domain/set-kind';
+import { formatPrBanner, unionPrKinds } from '../../domain/pr-labels';
 import { Sheet } from '../../ui/Sheet';
 import { EffortChips } from './EffortChips';
 import { getAllExercises } from '../../repositories/exercises.repo';
@@ -125,6 +126,7 @@ export function ActiveSessionScreen() {
   const [reps, setReps] = useState(10);
   const [setKind, setSetKind] = useState<SetKind>('work');
   const [rir, setRir] = useState<number | null>(null);
+  const [prBannerKinds, setPrBannerKinds] = useState<PrKind[]>([]);
 
   const [modality, setModality] = useState<CardioModality>('marche_inclinee');
   const [showSubstitute, setShowSubstitute] = useState(false);
@@ -228,6 +230,7 @@ export function ActiveSessionScreen() {
       setLoggedSets(sets);
       setSetKind('work');
       setRir(await getLastWorkRir(exId));
+      setPrBannerKinds([]);
 
       const exercise = exercisesById.get(exId);
       const isWeight = !exercise || exercise.loadType === 'weight';
@@ -335,6 +338,7 @@ export function ActiveSessionScreen() {
       setSubstitutedFromId(null);
       setWorkoutExerciseId(null);
       setLoggedSets([]);
+      setPrBannerKinds([]);
       setSetIndex(1);
       setSubIndex(0);
       setPendingAdvance(false);
@@ -370,6 +374,7 @@ export function ActiveSessionScreen() {
     setSubstitutedFromId(null);
     setWorkoutExerciseId(null);
     setLoggedSets([]);
+    setPrBannerKinds([]);
     setSetIndex(1);
     setSubIndex(0);
     setPendingAdvance(false);
@@ -398,7 +403,7 @@ export function ActiveSessionScreen() {
     }
     const exercise = exercisesById.get(currentExerciseId);
     const isTime = exercise?.loadType === 'time';
-    await logSet({
+    const logged = await logSet({
       workoutExerciseId: weId,
       exerciseId: currentExerciseId,
       index: setIndex,
@@ -408,6 +413,9 @@ export function ActiveSessionScreen() {
       setKind,
       rir,
     });
+    if (logged.prKinds.length > 0) {
+      setPrBannerKinds((prev) => unionPrKinds(prev, logged.prKinds));
+    }
     confirmSetFeedback();
     const sets = await getSetLogs(weId);
     setLoggedSets(sets);
@@ -598,6 +606,10 @@ export function ActiveSessionScreen() {
               }
             />
           </div>
+
+          {prBannerKinds.length > 0 ? (
+            <p className={styles.prBanner}>{formatPrBanner(prBannerKinds)}</p>
+          ) : null}
 
           <div className={styles.controls}>
             {exercisesById.get(currentExerciseId ?? '')?.loadType !== 'time' ? (

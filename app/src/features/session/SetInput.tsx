@@ -62,7 +62,6 @@ export function SetInput({ loggedSets, totalSets, activeIndex, unilateral }: Pro
                   : `${log.reps}${unilateral ? ' /côté' : ''} × ${formatWeight(log.weightKg)} kg`}
                 {kindLabel ? ` · ${kindLabel}` : ''}
                 {rirLabel ? ` · ${rirLabel}` : ''}
-                {log.isPR ? <span className={styles.pr}> · Record</span> : null}
               </span>
             ) : isActive ? (
               <span className={styles.pending}>en cours</span>

@@ -197,11 +197,17 @@ export async function logSet(input: LogSetInput): Promise<SetLog> {
   const setKind = input.setKind;
   const isWarmup = isWarmupFromKind(setKind);
   const rir = normalizeRir(setKind, input.rir);
+  const weRow = await db.workoutExercises.get(input.workoutExerciseId);
   const priorSets = await getPriorSetsForExercise(input.exerciseId, input.workoutExerciseId);
   const e1rm = isWarmup ? null : calculateE1rm(input.weightKg, input.reps);
+  const priorCount = weRow
+    ? await countPriorCompletedSessions(input.exerciseId, weRow.workoutId)
+    : 0;
+  const exercise = await db.exercises.get(input.exerciseId);
   const prKinds = detectPrKinds(
     { weightKg: input.weightKg, reps: input.reps, e1rm, isWarmup },
     priorSets,
+    { priorCompletedSessionCount: priorCount, unilateral: exercise?.unilateral ?? false },
   );
 
   const ts = nowIso();
@@ -227,7 +233,7 @@ export async function logSet(input: LogSetInput): Promise<SetLog> {
     deletedAt: null,
   };
   await db.setLogs.put(set);
-  const we = await db.workoutExercises.get(input.workoutExerciseId);
+  const we = weRow ?? (await db.workoutExercises.get(input.workoutExerciseId));
   if (we) {
     const next = statusAfterLogSet(we.completionStatus ?? 'planned');
     if (next !== we.completionStatus) {
@@ -236,6 +242,75 @@ export async function logSet(input: LogSetInput): Promise<SetLog> {
     await recomputeWorkoutTonnage(we.workoutId);
   }
   return set;
+}
+
+export async function countPriorCompletedSessions(
+  exerciseId: string,
+  excludeWorkoutId: string,
+): Promise<number> {
+  const workoutExercises = (await db.workoutExercises.where('exerciseId').equals(exerciseId).toArray()).filter(
+    (we) => we.deletedAt == null && we.workoutId !== excludeWorkoutId,
+  );
+  const completedIds = new Set<string>();
+  for (const we of workoutExercises) {
+    const workout = await db.workouts.get(we.workoutId);
+    if (!workout || workout.deletedAt != null || workout.status !== 'completed') continue;
+    const sets = await getSetLogs(we.id);
+    const hasWork = sets.some((s) => !s.isWarmup && s.reps != null && s.reps >= 1);
+    if (hasWork) completedIds.add(we.workoutId);
+  }
+  return completedIds.size;
+}
+
+export async function recomputePrForExerciseChronologically(exerciseId: string): Promise<void> {
+  const exercise = await db.exercises.get(exerciseId);
+  const unilateral = exercise?.unilateral ?? false;
+  const workoutExercises = (await db.workoutExercises.where('exerciseId').equals(exerciseId).toArray()).filter(
+    (we) => we.deletedAt == null,
+  );
+
+  type Row = { set: SetLog; workoutId: string };
+  const rows: Row[] = [];
+  for (const we of workoutExercises) {
+    const sets = await getSetLogs(we.id);
+    for (const set of sets) {
+      rows.push({ set, workoutId: we.workoutId });
+    }
+  }
+  rows.sort((a, b) => (a.set.completedAt < b.set.completedAt ? -1 : 1));
+
+  const priorWorking: Array<{
+    weightKg: number | null;
+    reps: number | null;
+    e1rm: number | null;
+    isWarmup: boolean;
+  }> = [];
+
+  for (const { set, workoutId } of rows) {
+    if (set.isWarmup || set.reps == null || set.reps < 1) {
+      await db.setLogs.update(set.id, { isPR: false, prKinds: [], updatedAt: nowIso() });
+      continue;
+    }
+    const priorCount = await countPriorCompletedSessions(exerciseId, workoutId);
+    const e1rm = set.isWarmup ? null : calculateE1rm(set.weightKg, set.reps);
+    const prKinds = detectPrKinds(
+      { weightKg: set.weightKg, reps: set.reps, e1rm, isWarmup: set.isWarmup },
+      priorWorking,
+      { priorCompletedSessionCount: priorCount, unilateral },
+    );
+    await db.setLogs.update(set.id, {
+      e1rm,
+      isPR: prKinds.length > 0,
+      prKinds,
+      updatedAt: nowIso(),
+    });
+    priorWorking.push({
+      weightKg: set.weightKg,
+      reps: set.reps,
+      e1rm,
+      isWarmup: set.isWarmup,
+    });
+  }
 }
 
 export async function getLastWorkRir(
@@ -340,7 +415,10 @@ export async function editSetLog(
     updatedAt: nowIso(),
   });
   const we = await db.workoutExercises.get(set.workoutExerciseId);
-  if (we) await recomputeWorkoutTonnage(we.workoutId);
+  if (we) {
+    await recomputeWorkoutTonnage(we.workoutId);
+    await recomputePrForExerciseChronologically(we.exerciseId);
+  }
 }
 
 export async function skipWorkoutExercise(workoutExerciseId: string): Promise<void> {

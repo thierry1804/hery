@@ -179,9 +179,10 @@ Table clé/valeur : cible protéines quotidienne, incréments personnalisés, da
 | **Tonnage d'une série** | `weightKg × reps` (× 2 si unilatéral) | Séries d'échauffement, soft-deleted, `reps < 1` ou `weightKg` null exclues |
 | **Tonnage d'une séance** | Somme des tonnages de séries | Stocké dans `Workout.totalTonnageKg`, recalculé après chaque mutation de série |
 | **Volume d'un muscle** | `Σ (séries effectives × coefficient)` sur la période | Primaire 1,0 · secondaire 0,5 (`RG-02`, `RG-15`) |
-| **PR de charge** | `weightKg` > max historique sur l'exercice, `reps` ≥ 1 | Hors échauffement (`RG-16`) |
+| **PR de charge** | `weightKg` > max historique work | ≥ 2 séances completed antérieures (`RG-16`) |
 | **PR de reps** | `reps` > max historique à `weightKg` égal ou supérieur | |
-| **PR d'e1RM** | `e1rm` > max historique sur l'exercice | |
+| **PR d'e1RM** | `e1rm` > max historique work | |
+| **PR de volume (série)** | `weight×reps×(unilatéral?2:1)` > max historique work | |
 | **Ratio d'équilibre** | `volume(A) / volume(B)` sur 4 semaines | Alerte hors [0,7 ; 1,4] (`RG-17`) |
 | **Progression de phase** | Mois 2 : +5 à 10 % si toutes les reps atteintes | Plafond +10 %/4 semaines (`C-07`) |
 

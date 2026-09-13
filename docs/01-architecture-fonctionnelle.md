@@ -146,7 +146,7 @@
 - `RG-13` e1RM = **Epley** : `charge × (1 + reps / 30)`. Non calculé au-delà de 12 répétitions (fiabilité insuffisante).
 - `RG-14` L'e1RM est calculé **au moment du log** et stocké sur la série. Il n'est jamais recalculé.
 - `RG-15` Volume d'un groupe musculaire = somme, sur la période, des séries effectives × coefficient de sollicitation. Les séries d'échauffement sont exclues.
-- `RG-16` Un PR n'est validé que sur une série non-échauffement d'au moins 1 répétition complète.
+- `RG-16` Un PR n'est validé que sur une série de travail (`reps` ≥ 1), si au moins **2 séances completed** antérieures existent pour l'exercice. Kinds : charge, reps à charge donnée, e1RM, volume de série (`weight × reps`, ×2 si unilatéral). Les séries d'échauffement et d'approche sont exclues.
 - `RG-17` Alerte de déséquilibre si le ratio de volume entre deux groupes antagonistes sort de l'intervalle [0,7 ; 1,4] sur 4 semaines glissantes.
 
 ### D6 — Corps
