@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { Exercise } from '../../db/schema';
+import type { Exercise, SetLog } from '../../db/schema';
 import {
   editSetLog,
   getWorkoutDetail,
@@ -27,6 +27,20 @@ function localInputToIso(local: string): string {
   return new Date(local).toISOString();
 }
 
+function formatSetPerformance(set: SetLog, exercise?: Exercise): string {
+  if (exercise?.loadType === 'time') {
+    return set.reps != null ? `${set.reps} s` : 'durée non renseignée';
+  }
+  if (exercise?.loadType === 'reps') {
+    return set.reps != null ? `${set.reps} répétitions · poids du corps` : 'répétitions non renseignées';
+  }
+  if (exercise?.loadType === 'distance') {
+    return set.reps != null ? `${set.reps} m` : 'distance non renseignée';
+  }
+  if (set.reps == null || set.weightKg == null) return 'série incomplète';
+  return `${set.reps} × ${set.weightKg} kg`;
+}
+
 export function WorkoutDetailScreen() {
   const { workoutId = '' } = useParams();
   const navigate = useNavigate();
@@ -47,6 +61,7 @@ export function WorkoutDetailScreen() {
   const [editPainArea, setEditPainArea] = useState('');
   const [editBodyweight, setEditBodyweight] = useState<number | null>(null);
   const [editDeload, setEditDeload] = useState(false);
+  const [collapsedExerciseIds, setCollapsedExerciseIds] = useState<Set<string>>(new Set());
 
   const reload = async () => {
     const d = await getWorkoutDetail(workoutId);
@@ -62,6 +77,18 @@ export function WorkoutDetailScreen() {
     void reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workoutId]);
+
+  useEffect(() => {
+    if (!editingId) return;
+    const frame = requestAnimationFrame(() => {
+      const panel = document.querySelector<HTMLElement>(`[data-editing-set="${editingId}"]`);
+      panel?.scrollIntoView({
+        block: 'center',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [editingId]);
 
   if (detail === undefined) {
     return (
@@ -185,26 +212,46 @@ export function WorkoutDetailScreen() {
       </section>
 
       {detail.exercises.map(({ workoutExercise, sets }) => {
+        const exercise = exercisesById.get(workoutExercise.exerciseId);
+        const collapsed = collapsedExerciseIds.has(workoutExercise.id);
         const status = workoutExercise.completionStatus;
         const statusLabel =
           status === 'skipped' ? 'Ignoré' : status === 'planned' && sets.length === 0 ? 'Non fait' : null;
         return (
           <section key={workoutExercise.id} className={styles.exerciseBlock}>
-            <h2 className={styles.exerciseName}>
-              {exercisesById.get(workoutExercise.exerciseId)?.name ?? 'Exercice'}
-              {statusLabel ? <span className={styles.statusLabel}> · {statusLabel}</span> : null}
-            </h2>
-            {sets.map((s) => {
+            <div className={styles.exerciseHeader}>
+              <h2 className={styles.exerciseName}>
+                {exercise?.name ?? 'Exercice'}
+                {statusLabel ? <span className={styles.statusLabel}> · {statusLabel}</span> : null}
+              </h2>
+              <button
+                type="button"
+                className={styles.exerciseToggle}
+                aria-expanded={!collapsed}
+                aria-label={`${collapsed ? 'Déplier' : 'Replier'} ${exercise?.name ?? 'Exercice'}`}
+                onClick={() =>
+                  setCollapsedExerciseIds((current) => {
+                    const next = new Set(current);
+                    if (next.has(workoutExercise.id)) next.delete(workoutExercise.id);
+                    else next.add(workoutExercise.id);
+                    return next;
+                  })
+                }
+              >
+                <span className={styles.toggleIcon} aria-hidden="true">{collapsed ? '+' : '−'}</span>
+              </button>
+            </div>
+            {!collapsed ? sets.map((s) => {
               const kind = s.setKind ?? (s.isWarmup ? 'warmup' : 'work');
               const kindLabel = setKindShortLabel(kind);
               const rirLabel = formatSetRir(s.rir);
               const incomplete =
                 !s.isWarmup &&
                 !setCountsTowardTonnage(s) &&
-                exercisesById.get(workoutExercise.exerciseId)?.loadType === 'weight';
+                exercise?.loadType === 'weight';
               return editingId === s.id ? (
-                <div key={s.id} className={styles.editPanel}>
-                  <Stepper value={editWeight} step={2.5} unit="kg" fontSizePx={28} decimals={1} onChange={setEditWeight} />
+                <div key={s.id} className={styles.editPanel} data-editing-set={s.id}>
+                  {exercise?.loadType === 'weight' ? <Stepper value={editWeight} step={2.5} unit="kg" fontSizePx={28} decimals={1} onChange={setEditWeight} /> : null}
                   <Stepper value={editReps} step={1} unit="reps" fontSizePx={20} onChange={setEditReps} />
                   <EffortChips
                     setKind={editSetKind}
@@ -246,7 +293,7 @@ export function WorkoutDetailScreen() {
                   }}
                 >
                   <span className={styles.setText}>
-                    Série {s.index} — {s.reps} × {s.weightKg} kg
+                    Série {s.index} — {formatSetPerformance(s, exercise)}
                     {kindLabel ? ` · ${kindLabel}` : ''}
                     {rirLabel ? ` · ${rirLabel}` : ''}
                     {s.isPR ? <span className={styles.pr}> · Record</span> : null}
@@ -256,7 +303,7 @@ export function WorkoutDetailScreen() {
                   <span className={styles.editHint}>modifier</span>
                 </button>
               );
-            })}
+            }) : null}
           </section>
         );
       })}

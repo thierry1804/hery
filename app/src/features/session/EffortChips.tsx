@@ -3,8 +3,8 @@ import { rirFromChip } from '../../domain/set-kind';
 import styles from './EffortChips.module.css';
 
 const KINDS: { id: SetKind; label: string }[] = [
-  { id: 'warmup', label: 'Échauff.' },
-  { id: 'approach', label: 'Approche' },
+  { id: 'warmup', label: 'Échauffement' },
+  { id: 'approach', label: 'Préparation' },
   { id: 'work', label: 'Travail' },
 ];
 
@@ -34,7 +34,7 @@ export function EffortChips({ setKind, onSetKindChange, rir, onRirChange }: Prop
         ))}
       </div>
       {setKind === 'work' ? (
-        <div className={styles.row} role="group" aria-label="RIR">
+        <div className={`${styles.row} ${styles.rirRow}`} role="group" aria-label="RIR, répétitions en réserve">
           {RIR_CHIPS.map((chip) => {
             const value = rirFromChip(chip);
             const selected = rir === value;

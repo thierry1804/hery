@@ -27,8 +27,8 @@ describe('set-kind', () => {
   });
 
   it('labels', () => {
-    expect(setKindShortLabel('warmup')).toBe('É');
-    expect(setKindShortLabel('approach')).toBe('A');
+    expect(setKindShortLabel('warmup')).toBe('Échauffement');
+    expect(setKindShortLabel('approach')).toBe('Préparation');
     expect(setKindShortLabel('work')).toBe('');
     expect(formatSetRir(2)).toBe('RIR 2');
     expect(formatSetRir(null)).toBe('');

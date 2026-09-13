@@ -24,7 +24,9 @@ test('parcours complet : démarrer, valider toutes les séries, terminer la séa
     if (await done.isVisible()) break;
 
     if (await confirmDuration.isVisible()) {
-      await confirmDuration.click();
+      await confirmDuration.click({ timeout: 1_000 }).catch(() => {
+        // L'écran final peut remplacer la boîte entre le contrôle et le clic.
+      });
       continue;
     }
     if (await validate.isVisible()) {

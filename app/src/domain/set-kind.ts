@@ -14,8 +14,8 @@ export function rirFromChip(chip: 0 | 1 | 2 | '3+'): number {
 }
 
 export function setKindShortLabel(kind: SetKind): string {
-  if (kind === 'warmup') return 'É';
-  if (kind === 'approach') return 'A';
+  if (kind === 'warmup') return 'Échauffement';
+  if (kind === 'approach') return 'Préparation';
   return '';
 }
 
