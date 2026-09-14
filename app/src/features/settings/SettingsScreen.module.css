@@ -7,7 +7,8 @@
   padding: var(--space-5) var(--space-4);
   padding-left: max(var(--space-4), env(safe-area-inset-left));
   padding-right: max(var(--space-4), env(safe-area-inset-right));
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  padding-top: calc(var(--space-6) + env(safe-area-inset-top));
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -23,7 +24,7 @@
   font-family: var(--font-display);
   font-stretch: var(--font-display-stretch);
   font-weight: 800;
-  font-size: clamp(1.25rem, 5vw, var(--fs-28));
+  font-size: clamp(1.5rem, 6vw, var(--fs-28));
   line-height: 1.15;
   margin: 0;
 }
@@ -39,9 +40,13 @@
 
 .sectionTitle {
   margin: 0;
-  font-size: var(--fs-12);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
+  font-size: var(--fs-14);
+  font-weight: 700;
   color: var(--fonte-300);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .row {
@@ -51,7 +56,7 @@
   gap: var(--space-4);
   font-size: var(--fs-14);
   color: var(--fonte-300);
-  min-height: 28px;
+  min-height: 32px;
 }
 
 .row span:last-child {
@@ -66,7 +71,7 @@
 .hint {
   margin: 0;
   color: var(--fonte-300);
-  font-size: var(--fs-12);
+  font-size: var(--fs-13);
   line-height: 1.45;
 }
 
@@ -91,9 +96,14 @@
   min-height: var(--tap-min);
   display: flex;
   align-items: center;
-  color: var(--magnesie);
+  color: var(--laiton);
   font-family: var(--font-display);
   font-stretch: var(--font-display-stretch);
   font-weight: 700;
   text-decoration: none;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--laiton);
+  outline-offset: 3px;
 }

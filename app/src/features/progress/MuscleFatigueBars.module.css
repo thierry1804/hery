@@ -15,14 +15,14 @@
 
 .label {
   color: var(--fonte-300);
-  font-size: var(--fs-12);
+  font-size: var(--fs-13);
 }
 
 .value {
   text-align: right;
   white-space: nowrap;
   color: var(--fonte-300);
-  font-size: var(--fs-12);
+  font-size: var(--fs-13);
 }
 
 .valueMeta {

@@ -76,6 +76,6 @@
   .value {
     grid-area: value;
     text-align: left;
-    font-size: var(--fs-12);
+    font-size: var(--fs-13);
   }
 }

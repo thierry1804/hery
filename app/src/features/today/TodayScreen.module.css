@@ -4,10 +4,11 @@
   min-height: 100%;
   max-width: 560px;
   margin: 0 auto;
-  padding: var(--space-5) var(--space-4);
+  padding: var(--space-6) var(--space-4) var(--space-4);
   padding-left: max(var(--space-4), env(safe-area-inset-left));
   padding-right: max(var(--space-4), env(safe-area-inset-right));
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  padding-top: calc(var(--space-6) + env(safe-area-inset-top));
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
@@ -23,15 +24,18 @@
   font-family: var(--font-display);
   font-stretch: var(--font-display-stretch);
   font-weight: 800;
-  font-size: clamp(1.25rem, 5vw, var(--fs-28));
+  font-size: clamp(1.5rem, 6vw, var(--fs-28));
   line-height: 1.15;
   margin: 0;
   letter-spacing: -0.01em;
 }
 
 .subtitle {
-  color: var(--fonte-300);
+  color: var(--laiton);
   font-size: var(--fs-14);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin: 0;
 }
 
@@ -60,6 +64,7 @@
   margin: 0 0 var(--space-3);
   color: var(--fonte-300);
   font-size: var(--fs-14);
+  font-weight: 600;
 }
 
 .itemRow {
@@ -79,7 +84,7 @@
 .itemName {
   color: var(--magnesie);
   font-size: var(--fs-16);
-  font-weight: 500;
+  font-weight: 600;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -87,8 +92,9 @@
 }
 
 .itemRx {
-  color: var(--fonte-300);
+  color: var(--laiton);
   font-size: var(--fs-14);
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -100,7 +106,7 @@
   padding-top: var(--space-3);
   border-top: 1px solid var(--fonte-500);
   color: var(--fonte-300);
-  font-size: var(--fs-12);
+  font-size: var(--fs-13);
 }
 
 .supportItem {
@@ -149,26 +155,19 @@
     gap: var(--space-4);
     padding-top: var(--space-4);
   }
-
-  .plate {
-    padding: var(--space-3);
-  }
-
-  .itemName {
-    font-size: var(--fs-14);
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-  }
-
-  .itemRx {
-    font-size: var(--fs-12);
-  }
 }
 
 @media (max-height: 700px) {
   .screen {
     gap: var(--space-4);
     padding-top: var(--space-4);
+  }
+}
+
+@media (min-width: 400px) {
+  .itemName {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
   }
 }

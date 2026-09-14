@@ -1,6 +1,6 @@
 .line {
   color: var(--fonte-300);
-  font-size: clamp(var(--fs-12), 3.5vw, var(--fs-14));
+  font-size: clamp(var(--fs-13), 3.5vw, var(--fs-14));
   margin: 0;
   line-height: 1.45;
   overflow-wrap: anywhere;

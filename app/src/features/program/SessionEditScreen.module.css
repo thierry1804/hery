@@ -94,7 +94,7 @@
   border: none;
   background: transparent;
   color: var(--fonte-300);
-  font-size: var(--fs-12);
+  font-size: var(--fs-13);
   text-align: center;
   cursor: pointer;
 }
@@ -102,6 +102,6 @@
 .supersetBadge {
   margin-left: var(--space-2);
   color: var(--acier);
-  font-size: var(--fs-12);
+  font-size: var(--fs-13);
   font-weight: 500;
 }

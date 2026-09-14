@@ -17,6 +17,8 @@ const STROKE = 10;
 const RADIUS = (SIZE - STROKE) / 2 - 4;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
+const RING_SIZE_CSS = 'min(300px, 72vw, 38dvh)';
+
 export function RestOverlay({ restEndsAt, totalSec, nextHint, onExtend, onSkip, onComplete }: Props) {
   const { remainingSec, remainingMs } = useRestTimer(restEndsAt, onComplete);
   const totalMs = Math.max(totalSec, 0.001) * 1000;
@@ -87,9 +89,13 @@ export function RestOverlay({ restEndsAt, totalSec, nextHint, onExtend, onSkip, 
       <div className={styles.stage}>
         {nextHint ? <p className={styles.nextHint}>Ensuite : {nextHint}</p> : null}
 
-        <div className={styles.ringWrap}>
+        <div className={styles.ringWrap} style={{ width: RING_SIZE_CSS, height: RING_SIZE_CSS }}>
           <div className={styles.ringPlate} aria-hidden="true" />
-          <svg className={styles.ring} width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden="true">
+          <svg
+            className={styles.ring}
+            viewBox={`0 0 ${SIZE} ${SIZE}`}
+            aria-hidden="true"
+          >
             <circle
               className={styles.ringTrack}
               cx={SIZE / 2}

@@ -13,6 +13,7 @@
   --font-display-stretch: 112%;
 
   --fs-12: 12px;
+  --fs-13: 13px;
   --fs-14: 14px;
   --fs-16: 16px;
   --fs-20: 20px;
@@ -28,12 +29,12 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  --radius-button: 8px;
+  --radius-button: 10px;
   --radius-pill: 999px;
-  --radius-block: 0px;
+  --radius-block: 12px;
 
   --tap-min: 56px;
-  --tap-primary: 72px;
+  --tap-primary: 64px;
 
   color-scheme: dark;
 }

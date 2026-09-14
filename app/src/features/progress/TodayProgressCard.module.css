@@ -4,18 +4,20 @@
   padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
   min-width: 0;
   width: 100%;
 }
 
 .label {
   margin: 0;
-  color: var(--magnesie);
+  color: var(--fonte-300);
   font-family: var(--font-display);
   font-stretch: var(--font-display-stretch);
-  font-size: clamp(var(--fs-14), 3.8vw, var(--fs-16));
+  font-size: var(--fs-14);
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .empty {
@@ -27,13 +29,13 @@
 
 .more {
   align-self: flex-start;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   color: var(--laiton);
   font-size: var(--fs-14);
   font-weight: 700;
   text-decoration: none;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
 }
 
 .more:focus-visible {

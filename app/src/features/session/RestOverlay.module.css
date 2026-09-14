@@ -175,13 +175,13 @@
 
 .ringWrap {
   position: relative;
-  width: 300px;
-  height: 300px;
+  width: min(300px, 72vw, 38dvh);
+  height: min(300px, 72vw, 38dvh);
 }
 
 .ringPlate {
   position: absolute;
-  inset: 22px;
+  inset: 7.5%;
   border-radius: 50%;
   background: var(--fonte-700);
 }
@@ -189,6 +189,8 @@
 .ring {
   position: relative;
   display: block;
+  width: 100%;
+  height: 100%;
   transform: rotate(-90deg);
 }
 
@@ -215,7 +217,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-3);
-  padding: 52px;
+  padding: 15%;
 }
 
 .label {
@@ -235,7 +237,7 @@
   font-family: var(--font-display);
   font-stretch: var(--font-display-stretch);
   font-weight: 800;
-  font-size: 72px;
+  font-size: clamp(3rem, 15vw, 64px);
   line-height: 0.95;
   color: var(--acier);
   letter-spacing: -0.02em;
@@ -256,7 +258,7 @@
 
 .total {
   color: var(--fonte-300);
-  font-size: var(--fs-12);
+  font-size: var(--fs-13);
   font-weight: 500;
 }
 
@@ -268,6 +270,16 @@
   gap: var(--space-3);
   width: 100%;
   max-width: 420px;
+}
+
+@media (max-height: 700px) {
+  .stage {
+    gap: var(--space-4);
+  }
+
+  .nextHint {
+    font-size: var(--fs-13);
+  }
 }
 
 @keyframes rise {

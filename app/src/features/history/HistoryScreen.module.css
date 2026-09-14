@@ -7,7 +7,8 @@
   padding: var(--space-5) var(--space-4);
   padding-left: max(var(--space-4), env(safe-area-inset-left));
   padding-right: max(var(--space-4), env(safe-area-inset-right));
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  padding-top: calc(var(--space-6) + env(safe-area-inset-top));
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -23,7 +24,7 @@
   font-family: var(--font-display);
   font-stretch: var(--font-display-stretch);
   font-weight: 800;
-  font-size: clamp(1.25rem, 5vw, var(--fs-28));
+  font-size: clamp(1.5rem, 6vw, var(--fs-28));
   line-height: 1.15;
   margin: 0;
 }
@@ -54,7 +55,7 @@
   gap: var(--space-4);
   text-decoration: none;
   color: inherit;
-  transition: background-color 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 160ms cubic-bezier(0.16, 1, 0.3, 1), transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .row:hover {
@@ -63,6 +64,7 @@
 
 .row:active {
   background: var(--fonte-500);
+  transform: scale(0.98);
 }
 
 .rowMain {
@@ -73,12 +75,13 @@
   font-family: var(--font-display);
   font-stretch: var(--font-display-stretch);
   font-weight: 700;
-  font-size: var(--fs-16);
+  font-size: var(--fs-20);
+  line-height: 1.2;
 }
 
 .meta {
   color: var(--fonte-300);
-  font-size: var(--fs-12);
+  font-size: var(--fs-14);
   margin-top: var(--space-1);
 }
 
@@ -87,10 +90,15 @@
 }
 
 .tonnage {
-  font-size: var(--fs-20);
+  font-size: var(--fs-16);
   font-weight: 700;
-  color: var(--magnesie);
+  color: var(--fonte-300);
   white-space: nowrap;
+}
+
+.tonnageStrong {
+  color: var(--laiton);
+  font-size: var(--fs-20);
 }
 
 .empty {
@@ -103,7 +111,7 @@
 
 .back {
   align-self: flex-start;
-  min-height: var(--tap-min);
+  min-height: 44px;
   padding: 0 var(--space-1);
   margin: calc(var(--space-2) * -1) 0 0;
   background: none;
@@ -146,7 +154,7 @@
   justify-content: space-between;
   align-items: center;
   gap: var(--space-3);
-  min-height: 48px;
+  min-height: 52px;
   padding: var(--space-2) 0;
   border-bottom: 1px solid var(--fonte-500);
   background: none;
@@ -169,7 +177,7 @@
 }
 
 .setText {
-  font-size: var(--fs-14);
+  font-size: var(--fs-16);
 }
 
 .pr {
@@ -178,7 +186,8 @@
 
 .editHint {
   color: var(--fonte-300);
-  font-size: var(--fs-12);
+  font-size: var(--fs-13);
+  flex: none;
 }
 
 .editPanel {
@@ -196,7 +205,7 @@
 }
 
 .skeletonRow {
-  height: 72px;
+  height: 64px;
   background: var(--fonte-700);
   border-radius: var(--radius-block);
 }

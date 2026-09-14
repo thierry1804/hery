@@ -37,7 +37,7 @@
 .record {
   grid-column: 1 / -1;
   color: var(--laiton);
-  font-size: var(--fs-12);
+  font-size: var(--fs-13);
 }
 
 .empty {
@@ -62,6 +62,6 @@
   .value {
     text-align: left;
     white-space: normal;
-    font-size: var(--fs-12);
+    font-size: var(--fs-13);
   }
 }
