@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "postinstall": "cd app && npm install",
+    "predev": "cd app && npm install",
     "dev": "cd app && npm run dev",
+    "prebuild": "cd app && npm install",
     "build": "cd app && npm run build"
   }
 }
