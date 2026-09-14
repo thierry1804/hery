@@ -412,6 +412,12 @@ export function ActiveSessionScreen() {
           {itemIndex + 1} / {totalSteps}
         </span>
       </div>
+      <div className={styles.stepTrack} aria-hidden="true">
+        <div
+          className={styles.stepFill}
+          style={{ width: `${((itemIndex + 1) / totalSteps) * 100}%` }}
+        />
+      </div>
 
       {step.kind === 'warmup' || step.kind === 'stretch' ? (
         <>
@@ -500,7 +506,8 @@ export function ActiveSessionScreen() {
                 </p>
                 {machineSettings ? <p className={styles.machineSettings}>{machineSettings}</p> : null}
                 <span className={`tabular ${styles.setBadge}`}>
-                  Série {setIndex}/{forceTotalSets}
+                  <span className={styles.setBadgeIndex}>{setIndex}</span>
+                  <span className={styles.setBadgeTotal}>/{forceTotalSets}</span>
                 </span>
               </div>
             </div>
