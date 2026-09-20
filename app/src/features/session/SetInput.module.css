@@ -1,23 +1,35 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: var(--space-2);
   padding: 0;
-  background: var(--fonte-700);
-  max-height: min(40dvh, 280px);
+  min-height: 0;
+  max-height: min(28dvh, 160px);
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  flex: 0 1 auto;
+}
+
+.listCompact {
+  max-height: none;
+  height: auto;
+  gap: 6px;
 }
 
 .row {
   display: grid;
-  grid-template-columns: 28px 1fr auto;
+  grid-template-columns: 28px minmax(0, auto) minmax(0, 1fr);
   align-items: center;
   gap: var(--space-2);
-  min-height: 36px;
-  padding: 6px var(--space-4);
-  color: var(--fonte-300);
+  height: 40px;
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  box-sizing: border-box;
+  background: var(--fonte-700);
+  border: 1px solid var(--fonte-500);
+  border-radius: var(--radius-button);
+  color: var(--magnesie);
   font-family: var(--font-display);
   font-stretch: var(--font-display-stretch);
   font-weight: 700;
@@ -25,21 +37,25 @@
   flex: 0 0 auto;
 }
 
-.rowActive {
-  color: var(--magnesie);
-  background: var(--fonte-500);
-  position: sticky;
-  top: 0;
-  bottom: 0;
-  z-index: 1;
+.listCompact .row {
+  grid-template-columns: 20px minmax(0, auto) minmax(0, 1fr);
+  gap: 4px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 8px;
+  font-size: var(--fs-12);
 }
 
-.rowActive .marker {
-  color: var(--acier);
+.rowCurrent {
+  border-color: color-mix(in srgb, var(--acier) 55%, var(--fonte-500));
 }
 
-.rowDone {
-  color: var(--magnesie);
+.rowPending {
+  color: var(--fonte-300);
+}
+
+.rowPending .value {
+  color: var(--fonte-300);
 }
 
 .marker {
@@ -48,10 +64,38 @@
   justify-content: center;
   width: 28px;
   min-height: 18px;
+  color: var(--magnesie);
+}
+
+.listCompact .marker {
+  width: 20px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--fonte-300);
+  box-sizing: border-box;
+}
+
+.listCompact .dot {
+  width: 7px;
+  height: 7px;
+}
+
+.rowCurrent .dot {
+  border-color: var(--acier);
+  background: var(--acier);
+}
+
+.rowDone .marker {
+  color: var(--magnesie);
 }
 
 .label {
   min-width: 0;
+  white-space: nowrap;
 }
 
 .value {
@@ -59,21 +103,33 @@
   font-size: var(--fs-14);
   text-align: right;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
-.pr {
-  color: var(--laiton);
-}
-
-.pending {
-  color: var(--fonte-300);
-  font-family: var(--font-body);
-  font-weight: 500;
+.listCompact .value {
   font-size: var(--fs-12);
-  text-align: right;
 }
 
-.rowActive .pending {
-  color: var(--acier);
-  font-weight: 600;
+@media (max-height: 700px) {
+  .list {
+    max-height: min(22dvh, 120px);
+    gap: 6px;
+  }
+
+  .row {
+    height: 36px;
+    min-height: 36px;
+    font-size: var(--fs-12);
+  }
+
+  .listCompact .row {
+    height: 32px;
+    min-height: 32px;
+  }
+
+  .value {
+    font-size: var(--fs-12);
+  }
 }

@@ -13,7 +13,7 @@ test('parcours complet : démarrer, valider toutes les séries, terminer la séa
 
   await expect(page).toHaveURL(/\/session\//);
 
-  const validate = page.getByRole('button', { name: 'VALIDER' });
+  const validate = page.getByRole('button', { name: /VALIDER/ });
   const pass = page.getByRole('button', { name: 'Passer' });
   const continueBtn = page.getByRole('button', { name: 'Continuer' });
   const finish = page.getByRole('button', { name: 'Terminé' });

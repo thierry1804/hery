@@ -1,14 +1,24 @@
-import { useEffect, useRef } from 'react';
 import type { SetLog } from '../../db/schema';
 import { formatSetRir, setKindShortLabel } from '../../domain/set-kind';
 import { ChalkMark } from '../../ui/ChalkMark';
 import styles from './SetInput.module.css';
 
+interface DraftSet {
+  reps: number;
+  weightKg: number | null;
+  durationSec?: number | null;
+  rir: number | null;
+  loadType?: 'weight' | 'time' | string;
+}
+
 interface Props {
   loggedSets: SetLog[];
   totalSets: number;
-  activeIndex: number;
+  currentIndex: number;
   unilateral: boolean;
+  draft?: DraftSet | null;
+  compact?: boolean;
+  className?: string;
 }
 
 function formatWeight(kg: number | null): string {
@@ -16,58 +26,70 @@ function formatWeight(kg: number | null): string {
   return Number.isInteger(kg) ? String(kg) : kg.toFixed(1).replace('.', ',');
 }
 
-export function SetInput({ loggedSets, totalSets, activeIndex, unilateral }: Props) {
-  const rows = Array.from({ length: totalSets }, (_, i) => i + 1);
-  const listRef = useRef<HTMLDivElement>(null);
-  const activeRef = useRef<HTMLDivElement>(null);
+function formatLoggedValue(log: SetLog, unilateral: boolean, compact: boolean): string {
+  const kind = log.setKind ?? (log.isWarmup ? 'warmup' : 'work');
+  const kindLabel = compact ? null : setKindShortLabel(kind);
+  const rirLabel = formatSetRir(log.rir);
+  const base =
+    log.durationSec != null
+      ? `${log.durationSec} s`
+      : `${log.reps}${unilateral && !compact ? ' /côté' : ''} × ${formatWeight(log.weightKg)}`;
+  const withUnit = log.durationSec != null ? base : `${base} kg`;
+  return `${withUnit}${kindLabel ? ` · ${kindLabel}` : ''}${rirLabel ? ` · ${rirLabel}` : ''}`;
+}
 
-  useEffect(() => {
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    activeRef.current?.scrollIntoView({
-      block: 'nearest',
-      behavior: reduceMotion ? 'auto' : 'smooth',
-    });
-  }, [activeIndex, totalSets]);
+function formatDraftValue(draft: DraftSet, unilateral: boolean, compact: boolean): string {
+  if (draft.loadType === 'time' || draft.durationSec != null) {
+    return `${draft.durationSec ?? 0} s`;
+  }
+  const rirLabel = formatSetRir(draft.rir);
+  return `${draft.reps}${unilateral && !compact ? ' /côté' : ''} × ${formatWeight(draft.weightKg)} kg${rirLabel ? ` · ${rirLabel}` : ''}`;
+}
+
+export function SetInput({
+  loggedSets,
+  totalSets,
+  currentIndex,
+  unilateral,
+  draft,
+  compact = false,
+  className,
+}: Props) {
+  if (totalSets <= 0) return null;
+
+  const byIndex = new Map(loggedSets.map((log) => [log.index, log]));
 
   return (
-    <div className={styles.list} role="list" aria-label="Séries" ref={listRef}>
-      {rows.map((n) => {
-        const log = loggedSets.find((s) => s.index === n);
-        const isActive = n === activeIndex && !log;
-        const isDone = !!log;
-        const kind = log ? (log.setKind ?? (log.isWarmup ? 'warmup' : 'work')) : null;
-        const kindLabel = kind ? setKindShortLabel(kind) : '';
-        const rirLabel = log ? formatSetRir(log.rir) : '';
+    <div
+      className={[styles.list, compact ? styles.listCompact : '', className].filter(Boolean).join(' ')}
+      role="list"
+      aria-label="Séries"
+    >
+      {Array.from({ length: totalSets }, (_, i) => i + 1).map((index) => {
+        const log = byIndex.get(index);
+        const isDone = log != null;
+        const isCurrent = !isDone && index === currentIndex;
+        const isFuture = !isDone && index > currentIndex;
+        const rowClass = [
+          styles.row,
+          isDone ? styles.rowDone : '',
+          isCurrent ? styles.rowCurrent : '',
+          isFuture || (!isDone && index < currentIndex) ? styles.rowPending : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+        let value = '—';
+        if (isDone && log) value = formatLoggedValue(log, unilateral, compact);
+        else if (isCurrent && draft) value = formatDraftValue(draft, unilateral, compact);
+
         return (
-          <div
-            key={n}
-            ref={isActive ? activeRef : undefined}
-            role="listitem"
-            className={[
-              styles.row,
-              isActive ? styles.rowActive : '',
-              isDone ? styles.rowDone : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          >
+          <div key={index} role="listitem" className={rowClass} aria-current={isCurrent ? 'step' : undefined}>
             <span className={styles.marker} aria-hidden="true">
-              {log ? <ChalkMark /> : isActive ? '▸' : '·'}
+              {isDone ? <ChalkMark /> : <span className={styles.dot} />}
             </span>
-            <span className={styles.label}>Série {n}</span>
-            {log ? (
-              <span className={`tabular ${styles.value}`}>
-                {log.durationSec != null
-                  ? `${log.durationSec} s`
-                  : `${log.reps}${unilateral ? ' /côté' : ''} × ${formatWeight(log.weightKg)} kg`}
-                {kindLabel ? ` · ${kindLabel}` : ''}
-                {rirLabel ? ` · ${rirLabel}` : ''}
-              </span>
-            ) : isActive ? (
-              <span className={styles.pending}>en cours</span>
-            ) : (
-              <span className={styles.pending}>—</span>
-            )}
+            <span className={styles.label}>{compact ? `S${index}` : `Série ${index}`}</span>
+            <span className={`tabular ${styles.value}`}>{value}</span>
           </div>
         );
       })}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { CardioModality, Exercise, PrescribedItem, PrKind, SetLog, Workout } from '../../db/schema';
+import type { CardioModality, Exercise, ExerciseProgressionMemory, PrescribedItem, PrKind, SetLog, Workout } from '../../db/schema';
 import {
   addCardioLog,
   completeWorkout,
@@ -41,8 +41,16 @@ import { useSessionStore } from './session.store';
 import { confirmSetFeedback } from '../../lib/haptics';
 import { FlameIcon, HeartIcon, PencilIcon, SkipIcon, StretchIcon, SwapIcon, UndoIcon } from '../../ui/icons';
 import { midSetHint } from '../../domain/coach-midset';
+import { getMemoriesByExerciseIds, recomputeAllExerciseMemories } from '../../repositories/exercise-memory.repo';
+import { CoachTip, hasCoachTip } from './CoachTip';
 import styles from './ActiveSessionScreen.module.css';
 import { getAcceptedCoachTarget } from '../../repositories/coach-target.repo';
+import {
+  applyCoachProposalsForWorkout,
+  getWorkoutCoachBrief,
+  type CoachProposalLine,
+} from '../../repositories/coach-apply.repo';
+import { SessionEndBrief } from './SessionEndBrief';
 
 type Step =
   | { kind: 'warmup'; items: PrescribedItem[] }
@@ -116,6 +124,7 @@ export function ActiveSessionScreen() {
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
   const [restTotalSec, setRestTotalSec] = useState(90);
   const [restNextLoadKg, setRestNextLoadKg] = useState<number | null>(null);
+  const [restNextReps, setRestNextReps] = useState<number | null>(null);
   const [pendingAdvance, setPendingAdvance] = useState(false);
 
   const [currentExerciseId, setCurrentExerciseId] = useState<string | null>(null);
@@ -132,11 +141,13 @@ export function ActiveSessionScreen() {
   const [rir, setRir] = useState<number | null>(null);
   const [prBannerKinds, setPrBannerKinds] = useState<PrKind[]>([]);
   const [setHint, setSetHint] = useState<string | null>(null);
+  const [coachMemory, setCoachMemory] = useState<ExerciseProgressionMemory | null>(null);
 
   const [modality, setModality] = useState<CardioModality>('marche_inclinee');
   const [showSubstitute, setShowSubstitute] = useState(false);
   const [showExercisePicker, setShowExercisePicker] = useState(false);
   const [showNote, setShowNote] = useState(false);
+  const [showIllustration, setShowIllustration] = useState(false);
   const [finished, setFinished] = useState(false);
   const [sessionLabel, setSessionLabel] = useState('Séance');
   const [durationConfirm, setDurationConfirm] = useState<{
@@ -237,6 +248,13 @@ export function ActiveSessionScreen() {
       setRir(await getLastWorkRir(exId));
       setPrBannerKinds([]);
 
+      let memories = await getMemoriesByExerciseIds([exId]);
+      if (!memories.has(exId)) {
+        await recomputeAllExerciseMemories();
+        memories = await getMemoriesByExerciseIds([exId]);
+      }
+      setCoachMemory(memories.get(exId) ?? null);
+
       const exercise = exercisesById.get(exId);
       const isWeight = !exercise || exercise.loadType === 'weight';
 
@@ -274,13 +292,19 @@ export function ActiveSessionScreen() {
   }, [itemIndex, setIndex, subIndex, currentExerciseId, exercisesById]);
 
   useEffect(() => {
+    setSetHint(null);
+  }, [itemIndex, subIndex, currentExerciseId]);
+
+  useEffect(() => {
     if (restEndsAt == null) {
       setRestNextLoadKg(null);
+      setRestNextReps(null);
       return;
     }
 
     if (!pendingAdvance && step?.kind === 'exercise') {
       setRestNextLoadKg(weightKg);
+      setRestNextReps(reps);
       return;
     }
 
@@ -293,6 +317,7 @@ export function ActiveSessionScreen() {
     const exerciseId = targetItem?.exerciseId ?? null;
     if (!exerciseId || exercisesById.get(exerciseId)?.loadType !== 'weight') {
       setRestNextLoadKg(null);
+      setRestNextReps(null);
       return;
     }
 
@@ -304,9 +329,10 @@ export function ActiveSessionScreen() {
       if (cancelled) return;
       const previous = previousSets.find((set) => set.index === 1) ?? previousSets[0];
       setRestNextLoadKg(coachTarget ?? previous?.weightKg ?? null);
+      setRestNextReps(previous?.reps ?? targetItem?.repsTarget ?? null);
     });
     return () => { cancelled = true; };
-  }, [restEndsAt, pendingAdvance, step, steps, itemIndex, exercisesById, weightKg, workoutId]);
+  }, [restEndsAt, pendingAdvance, step, steps, itemIndex, exercisesById, weightKg, reps, workoutId]);
 
   if (finished) return <FinishedView workoutId={workoutId} onDone={() => navigate('/')} />;
   if (!workout || !step) {
@@ -331,6 +357,11 @@ export function ActiveSessionScreen() {
   const activeExercise = exercisesById.get(currentExerciseId ?? '');
   const weightStep = Math.max(activeExercise?.defaultIncrementKg ?? 2.5, 1.25);
   const isUnilateral = activeExercise?.unilateral ?? false;
+  const coachLoadKg = coachMemory?.suggestedLoadKg ?? coachMemory?.currentLoadKg ?? null;
+  const weightOffAdvice =
+    coachMemory != null && coachLoadKg != null && Math.abs(weightKg - coachLoadKg) > weightStep / 2;
+  const repsOffAdvice =
+    coachMemory != null && (reps < coachMemory.targetReps[0] || reps > coachMemory.targetReps[1]);
 
   const restNextHint = (() => {
     if (!pendingAdvance) return `Série ${setIndex}`;
@@ -384,6 +415,7 @@ export function ActiveSessionScreen() {
       setLoggedSets([]);
       setPrBannerKinds([]);
       setSetHint(null);
+      setCoachMemory(null);
       setSetIndex(1);
       setSubIndex(0);
       setPendingAdvance(false);
@@ -636,7 +668,21 @@ export function ActiveSessionScreen() {
         <>
           <div className={styles.exercisePane}>
             <div className={styles.titleBlock}>
-              <h1 className={styles.exerciseName}>{forceExerciseTitle}</h1>
+              <div className={styles.titleRow}>
+                <h1 className={styles.exerciseName}>{forceExerciseTitle}</h1>
+                <button
+                  type="button"
+                  className={styles.illustrationBtn}
+                  aria-label={`Voir l'illustration : ${forceExerciseTitle}`}
+                  onClick={() => setShowIllustration(true)}
+                >
+                  <ExerciseIllustration
+                    variant="thumb"
+                    exerciseId={currentExerciseId ?? currentItem?.exerciseId}
+                    name={forceExerciseTitle}
+                  />
+                </button>
+              </div>
               <div className={styles.metaRow}>
                 {step.kind === 'superset' && (
                   <p className={styles.supersetHint}>
@@ -653,7 +699,43 @@ export function ActiveSessionScreen() {
               </div>
             </div>
 
-            <SetInput loggedSets={loggedSets} unilateral={isUnilateral} />
+            {hasCoachTip(coachMemory, setHint) ? (
+              <div className={styles.setCoachRow}>
+                <div className={styles.setCoachSets}>
+                  <SetInput
+                    loggedSets={loggedSets}
+                    totalSets={forceTotalSets}
+                    currentIndex={setIndex}
+                    unilateral={isUnilateral}
+                    compact
+                    draft={{
+                      reps,
+                      weightKg: activeExercise?.loadType === 'time' ? null : weightKg,
+                      durationSec: activeExercise?.loadType === 'time' ? (currentItem?.durationSec ?? null) : null,
+                      rir,
+                      loadType: activeExercise?.loadType,
+                    }}
+                  />
+                </div>
+                <div className={styles.setCoachTipCell}>
+                  <CoachTip memory={coachMemory} midSetHint={setHint} fill />
+                </div>
+              </div>
+            ) : (
+              <SetInput
+                loggedSets={loggedSets}
+                totalSets={forceTotalSets}
+                currentIndex={setIndex}
+                unilateral={isUnilateral}
+                draft={{
+                  reps,
+                  weightKg: activeExercise?.loadType === 'time' ? null : weightKg,
+                  durationSec: activeExercise?.loadType === 'time' ? (currentItem?.durationSec ?? null) : null,
+                  rir,
+                  loadType: activeExercise?.loadType,
+                }}
+              />
+            )}
 
             {prBannerKinds.length > 0 ? (
               <p className={styles.prBanner}>{formatPrBanner(prBannerKinds)}</p>
@@ -670,6 +752,7 @@ export function ActiveSessionScreen() {
                     unit="kg"
                     fontSizePx={52}
                     decimals={1}
+                    warn={weightOffAdvice}
                     decrementAriaLabel={`Réduire le poids de ${weightStep.toFixed(weightStep % 1 === 0 ? 0 : 2).replace('.', ',')} kilos`}
                     incrementAriaLabel={`Augmenter le poids de ${weightStep.toFixed(weightStep % 1 === 0 ? 0 : 2).replace('.', ',')} kilos`}
                     onChange={setWeightKg}
@@ -681,6 +764,7 @@ export function ActiveSessionScreen() {
                     step={1}
                     unit={isUnilateral ? 'reps /côté' : 'reps'}
                     fontSizePx={38}
+                    warn={repsOffAdvice}
                     decrementAriaLabel="Réduire d'une répétition"
                     incrementAriaLabel="Augmenter d'une répétition"
                     onChange={setReps}
@@ -709,7 +793,7 @@ export function ActiveSessionScreen() {
                   min={0}
                   valuePrefix="Repos"
                   unit="s"
-                  fontSizePx={16}
+                  fontSizePx={28}
                   decrementAriaLabel="Réduire le repos de 15 secondes"
                   incrementAriaLabel="Augmenter le repos de 15 secondes"
                   onChange={(restSec) => currentItem && updateItemPrescription(currentItem.id, { restSec })}
@@ -724,13 +808,9 @@ export function ActiveSessionScreen() {
               onRirChange={setRir}
             />
 
-            {setHint ? (
-              <p className={styles.setHint} role="status">
-                {setHint}
-              </p>
-            ) : null}
+          </div>
 
-            <div className={styles.actions}>
+          <div className={styles.actions}>
               <BigButton
                 variant="primary"
                 className={styles.validateBtn}
@@ -778,7 +858,6 @@ export function ActiveSessionScreen() {
                 <UndoIcon className="icon-inline" /> Annuler la dernière série
               </button>
             </div>
-          </div>
         </>
       )}
 
@@ -788,6 +867,7 @@ export function ActiveSessionScreen() {
           totalSec={restTotalSec}
           nextHint={restNextHint}
           nextLoadKg={restNextLoadKg}
+          nextReps={restNextReps}
           onExtend={extendRest}
           onSkip={finishRest}
           onComplete={finishRest}
@@ -834,6 +914,23 @@ export function ActiveSessionScreen() {
           }}
           onClose={() => setShowNote(false)}
         />
+      )}
+
+      {showIllustration && (
+        <Sheet title={forceExerciseTitle} onClose={() => setShowIllustration(false)}>
+          <div className={styles.illustrationSheet}>
+            <ExerciseIllustration
+              variant="hero"
+              exerciseId={currentExerciseId ?? currentItem?.exerciseId}
+              name={forceExerciseTitle}
+            />
+          </div>
+          {machineSettings ? <p className={styles.illustrationSheetMeta}>{machineSettings}</p> : null}
+          {lastSetsText ? <p className={styles.illustrationSheetMeta}>Dernière fois : {lastSetsText}</p> : null}
+          <BigButton variant="ghost" onClick={() => setShowIllustration(false)}>
+            Fermer
+          </BigButton>
+        </Sheet>
       )}
 
       {durationConfirm && (
@@ -1006,16 +1103,31 @@ function FinishedView({ workoutId, onDone }: { workoutId: string; onDone: () => 
   const [painArea, setPainArea] = useState('');
   const [bodyweightKg, setBodyweightKg] = useState<number | null>(null);
   const [isDeload, setIsDeload] = useState(false);
+  const [briefLines, setBriefLines] = useState<CoachProposalLine[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void getWorkoutCoachBrief(workoutId).then(setBriefLines);
+  }, [workoutId]);
 
   const saveAndClose = async () => {
-    await updateWorkoutRecovery(workoutId, { fatigueLevel, painLevel, painArea, bodyweightKg, isDeload });
-    onDone();
+    if (saving) return;
+    setSaving(true);
+    try {
+      await updateWorkoutRecovery(workoutId, { fatigueLevel, painLevel, painArea, bodyweightKg, isDeload });
+      await recomputeAllExerciseMemories();
+      await applyCoachProposalsForWorkout(workoutId);
+      onDone();
+    } finally {
+      setSaving(false);
+    }
   };
   return (
     <div className={styles.screen}>
       <div className={styles.finished}>
         <h1 className={styles.exerciseName}>Séance terminée</h1>
         <p className={styles.lastTime}>Enregistrée sur cet appareil.</p>
+        <SessionEndBrief lines={briefLines} />
         <div className={styles.recoveryForm}>
           <p>Fatigue ressentie</p>
           <ChoiceRow values={[1, 2, 3, 4, 5]} selected={fatigueLevel} onSelect={setFatigueLevel} />
@@ -1027,8 +1139,8 @@ function FinishedView({ workoutId, onDone }: { workoutId: string; onDone: () => 
           <label>Poids du jour (optionnel)<input type="number" min="20" max="300" step="0.1" value={bodyweightKg ?? ''} onChange={(event) => setBodyweightKg(event.target.value ? Number(event.target.value) : null)} /></label>
           <label><input type="checkbox" checked={isDeload} onChange={(event) => setIsDeload(event.target.checked)} /> Séance allégée / deload</label>
         </div>
-        <BigButton variant="primary" onClick={() => void saveAndClose()}>
-          Retour à l&apos;accueil
+        <BigButton variant="primary" disabled={saving} onClick={() => void saveAndClose()}>
+          {briefLines.length > 0 ? 'Acter et retour' : 'Retour à l\'accueil'}
         </BigButton>
       </div>
     </div>

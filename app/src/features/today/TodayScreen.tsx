@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Exercise, PrescribedItem, SessionTemplate, Workout } from '../../db/schema';
-import { getAllTemplates, getPrescribedItems, getTemplateForDay } from '../../repositories/program.repo';
+import { getAllTemplates, getPrescribedItems, getTemplateById, getTemplateForDay } from '../../repositories/program.repo';
 import { getExercisesByIds } from '../../repositories/exercises.repo';
 import { getResumableWorkout, startWorkout } from '../../repositories/workouts.repo';
 import {
@@ -13,6 +13,7 @@ import { dayOfWeekIso } from '../../lib/date';
 import { BigButton } from '../../ui/BigButton';
 import { FlameIcon, HeartIcon, StretchIcon } from '../../ui/icons';
 import { TodayProgressCard } from '../progress/TodayProgressCard';
+import { buildBriefLines } from './brief-lines';
 import { SessionBrief } from './SessionBrief';
 import styles from './TodayScreen.module.css';
 
@@ -41,6 +42,32 @@ function nextProgramDayLabel(templates: SessionTemplate[], fromDay: number): str
   return null;
 }
 
+async function loadBriefForExerciseIds(ids: string[]): Promise<{
+  lines: { name: string; text: string }[];
+  painWatch: boolean;
+}> {
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (unique.length === 0) return { lines: [], painWatch: false };
+
+  let memories = await getMemoriesByExerciseIds(unique);
+  const missing = unique.some((id) => !memories.has(id));
+  if (missing) {
+    await recomputeAllExerciseMemories();
+    memories = await getMemoriesByExerciseIds(unique);
+  }
+
+  const exs = await getExercisesByIds(unique);
+  const exercisesById = new Map(exs.map((e) => [e.id, e]));
+  const lines = buildBriefLines(unique, exercisesById, memories);
+
+  const recent = await db.workouts
+    .filter((w) => w.deletedAt == null && w.status === 'completed')
+    .toArray();
+  recent.sort((a, b) => (a.date < b.date ? 1 : -1));
+  const painWatch = (recent[0]?.painLevel ?? 0) >= 5;
+  return { lines, painWatch };
+}
+
 export function TodayScreen() {
   const navigate = useNavigate();
   const [template, setTemplate] = useState<SessionTemplate | null | undefined>(undefined);
@@ -58,50 +85,43 @@ export function TodayScreen() {
     const ids = Array.from(new Set(prescribed.map((i) => i.exerciseId).filter((x): x is string => !!x)));
     const exs = await getExercisesByIds(ids);
     setExercisesById(new Map(exs.map((e) => [e.id, e])));
-
-    let memories = await getMemoriesByExerciseIds(ids);
-    if (memories.size === 0 && ids.length > 0) {
-      await recomputeAllExerciseMemories();
-      memories = await getMemoriesByExerciseIds(ids);
-    }
-    const lines: { name: string; text: string }[] = [];
-    for (const id of ids) {
-      const mem = memories.get(id);
-      const name = exs.find((e) => e.id === id)?.name;
-      if (!mem || !name) continue;
-      const load =
-        mem.suggestedLoadKg != null
-          ? `${mem.suggestedLoadKg.toLocaleString('fr-FR')} kg`
-          : mem.currentLoadKg != null
-            ? `${mem.currentLoadKg.toLocaleString('fr-FR')} kg`
-            : null;
-      const text =
-        mem.status === 'hold' && load
-          ? `Maintiens ${load}, vise ${mem.targetReps[0]}–${mem.targetReps[1]} reps à RIR ${mem.targetRir[0]}–${mem.targetRir[1]}`
-          : mem.lastReason;
-      lines.push({ name, text });
-    }
-    setBriefLines(lines);
-
-    const recent = await db.workouts
-      .filter((w) => w.deletedAt == null && w.status === 'completed')
-      .toArray();
-    recent.sort((a, b) => (a.date < b.date ? 1 : -1));
-    setPainWatch((recent[0]?.painLevel ?? 0) >= 5);
+    const brief = await loadBriefForExerciseIds(ids);
+    setBriefLines(brief.lines);
+    setPainWatch(brief.painWatch);
   };
 
   useEffect(() => {
     void (async () => {
       const templates = await getAllTemplates();
       setAllTemplates(templates);
+      const r = await getResumableWorkout();
+      setResumable(r);
       const tpl = await getTemplateForDay(dayOfWeekIso());
       if (tpl) {
         await loadTemplate(tpl);
-      } else {
-        setTemplate(null);
+        return;
       }
-      const r = await getResumableWorkout();
-      setResumable(r);
+      setTemplate(null);
+      if (r) {
+        const ids = r.templateSnapshot
+          .map((item) => item.exerciseId)
+          .filter((id): id is string => !!id);
+        if (ids.length === 0 && r.sessionTemplateId) {
+          const resumeTpl = await getTemplateById(r.sessionTemplateId);
+          if (resumeTpl) {
+            const prescribed = await getPrescribedItems(resumeTpl.id);
+            const brief = await loadBriefForExerciseIds(
+              prescribed.map((i) => i.exerciseId).filter((id): id is string => !!id),
+            );
+            setBriefLines(brief.lines);
+            setPainWatch(brief.painWatch);
+            return;
+          }
+        }
+        const brief = await loadBriefForExerciseIds(ids);
+        setBriefLines(brief.lines);
+        setPainWatch(brief.painWatch);
+      }
     })();
   }, []);
 
@@ -135,6 +155,8 @@ export function TodayScreen() {
                 : "Aucune séance prévue aujourd'hui."}
           </p>
         </header>
+
+        <SessionBrief lines={briefLines} painWatch={painWatch} />
 
         <TodayProgressCard />
 

@@ -8,6 +8,7 @@ interface Props {
   totalSec: number;
   nextHint?: string;
   nextLoadKg?: number | null;
+  nextReps?: number | null;
   onExtend: (extraSec: number) => void;
   onSkip: () => void;
   onComplete: () => void;
@@ -18,7 +19,7 @@ const STROKE = 10;
 const RADIUS = (SIZE - STROKE) / 2 - 4;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-export function RestOverlay({ restEndsAt, totalSec, nextHint, nextLoadKg, onExtend, onSkip, onComplete }: Props) {
+export function RestOverlay({ restEndsAt, totalSec, nextHint, nextLoadKg, nextReps, onExtend, onSkip, onComplete }: Props) {
   const { remainingSec, remainingMs } = useRestTimer(restEndsAt, onComplete);
   const totalMs = Math.max(totalSec, 0.001) * 1000;
   const progress = Math.min(1, Math.max(0, remainingMs / totalMs));
@@ -26,6 +27,10 @@ export function RestOverlay({ restEndsAt, totalSec, nextHint, nextLoadKg, onExte
   const dashOffset = CIRCUMFERENCE * (1 - progress);
   const urgent = remainingSec > 0 && remainingSec <= 10;
   const [min, sec] = formatMmSs(remainingSec).split(':');
+  const nextLoadLabel =
+    nextLoadKg != null
+      ? `${nextLoadKg.toLocaleString('fr-FR')} kg${nextReps != null ? ` × ${nextReps}` : ''}`
+      : null;
 
   // Plus le repos avance, plus le fond s'anime (durée plus courte = tempo plus vif).
   const breathSec = urgent ? 1.4 : 2.2 + progress * 1.6;
@@ -37,7 +42,7 @@ export function RestOverlay({ restEndsAt, totalSec, nextHint, nextLoadKg, onExte
       className={`${styles.overlay} ${urgent ? styles.overlayUrgent : ''}`}
       role="dialog"
       aria-modal="true"
-      aria-label={`Repos ${formatMmSs(remainingSec)}${nextHint ? `, ensuite ${nextHint}` : ''}${nextLoadKg != null ? ` à ${nextLoadKg} kg` : ''}`}
+      aria-label={`Repos ${formatMmSs(remainingSec)}${nextHint ? `, ensuite ${nextHint}` : ''}${nextLoadLabel ? ` à ${nextLoadLabel}` : ''}`}
     >
       <div className={styles.backdrop} aria-hidden="true">
         <div
@@ -89,7 +94,7 @@ export function RestOverlay({ restEndsAt, totalSec, nextHint, nextLoadKg, onExte
         {nextHint ? (
           <div className={styles.nextBlock}>
             <p className={styles.nextHint}>Ensuite : {nextHint}</p>
-            {nextLoadKg != null ? <p className={`tabular ${styles.nextLoad}`}>{nextLoadKg.toLocaleString('fr-FR')} kg</p> : null}
+            {nextLoadLabel ? <p className={`tabular ${styles.nextLoad}`}>{nextLoadLabel}</p> : null}
           </div>
         ) : null}
 

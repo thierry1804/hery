@@ -20,7 +20,7 @@ interface Props {
 export function EffortChips({ setKind, onSetKindChange, rir, onRirChange }: Props) {
   return (
     <div className={styles.wrap}>
-      <div className={styles.row} role="group" aria-label="Type de série">
+      <div className={styles.kindRow} role="group" aria-label="Type de série">
         {KINDS.map((k) => (
           <button
             key={k.id}
@@ -34,7 +34,8 @@ export function EffortChips({ setKind, onSetKindChange, rir, onRirChange }: Prop
         ))}
       </div>
       {setKind === 'work' ? (
-        <div className={`${styles.row} ${styles.rirRow}`} role="group" aria-label="RIR, répétitions en réserve">
+        <div className={styles.rirRow} role="group" aria-label="RIR, répétitions en réserve">
+          <span className={styles.rirLabel}>RIR</span>
           {RIR_CHIPS.map((chip) => {
             const value = rirFromChip(chip);
             const selected = rir === value;

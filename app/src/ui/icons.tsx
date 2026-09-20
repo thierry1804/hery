@@ -59,6 +59,21 @@ export function UndoIcon(props: IconProps) {
   );
 }
 
+export function SkipIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path
+        d="M5 6.5v11l8.5-5.5L5 6.5ZM16.5 6.5v11"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function FlameIcon(props: IconProps) {
   return (
     <svg {...base(props)}>
