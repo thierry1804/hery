@@ -9,11 +9,26 @@
       "equipment": "machine",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["quadriceps", "fessiers"],
-      "secondaryMuscles": ["ischios"],
+      "primaryMuscles": [
+        "quadriceps",
+        "fessiers"
+      ],
+      "secondaryMuscles": [
+        "ischios"
+      ],
       "defaultIncrementKg": 5,
-      "alternativeIds": ["ex-squat-smith", "ex-goblet-squat", "ex-fentes-marchees", "ex-leg-extension"],
-      "cues": ["Ne pas verrouiller les genoux en fin de poussée", "Bas du dos plaqué contre le dossier", "Descente contrôlée sur 2 secondes"]
+      "alternativeIds": [
+        "ex-squat-smith",
+        "ex-goblet-squat",
+        "ex-fentes-marchees",
+        "ex-leg-extension"
+      ],
+      "cues": [
+        "Ne pas verrouiller les genoux en fin de poussée",
+        "Bas du dos plaqué contre le dossier",
+        "Descente contrôlée sur 2 secondes"
+      ],
+      "loadSemantics": "machine_resistance"
     },
     {
       "id": "ex-leg-curl",
@@ -21,11 +36,22 @@
       "equipment": "machine",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["ischios"],
-      "secondaryMuscles": ["mollets"],
+      "primaryMuscles": [
+        "ischios"
+      ],
+      "secondaryMuscles": [
+        "mollets"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-souleve-terre-roumain", "ex-leg-curl-assis"],
-      "cues": ["Bassin plaqué, ne pas décoller les hanches", "Pause courte en contraction"]
+      "alternativeIds": [
+        "ex-souleve-terre-roumain",
+        "ex-leg-curl-assis"
+      ],
+      "cues": [
+        "Bassin plaqué, ne pas décoller les hanches",
+        "Pause courte en contraction"
+      ],
+      "loadSemantics": "machine_resistance"
     },
     {
       "id": "ex-leg-curl-assis",
@@ -33,11 +59,21 @@
       "equipment": "machine",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["ischios"],
-      "secondaryMuscles": ["mollets"],
+      "primaryMuscles": [
+        "ischios"
+      ],
+      "secondaryMuscles": [
+        "mollets"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-leg-curl", "ex-souleve-terre-roumain"],
-      "cues": ["Cale-cuisses bien serré"]
+      "alternativeIds": [
+        "ex-leg-curl",
+        "ex-souleve-terre-roumain"
+      ],
+      "cues": [
+        "Cale-cuisses bien serré"
+      ],
+      "loadSemantics": "machine_resistance"
     },
     {
       "id": "ex-developpe-couche-machine",
@@ -45,11 +81,24 @@
       "equipment": "machine",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["pectoraux"],
-      "secondaryMuscles": ["triceps", "deltoides_ant"],
+      "primaryMuscles": [
+        "pectoraux"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoides_ant"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-developpe-incline-halteres", "ex-ecartes-machine", "ex-developpe-couche-halteres"],
-      "cues": ["Poignées à hauteur de la mi-poitrine", "Omoplates serrées, ne pas décoller les épaules"]
+      "alternativeIds": [
+        "ex-developpe-incline-halteres",
+        "ex-ecartes-machine",
+        "ex-developpe-couche-halteres"
+      ],
+      "cues": [
+        "Poignées à hauteur de la mi-poitrine",
+        "Omoplates serrées, ne pas décoller les épaules"
+      ],
+      "loadSemantics": "machine_resistance"
     },
     {
       "id": "ex-developpe-couche-halteres",
@@ -57,11 +106,22 @@
       "equipment": "dumbbell",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["pectoraux"],
-      "secondaryMuscles": ["triceps", "deltoides_ant"],
+      "primaryMuscles": [
+        "pectoraux"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoides_ant"
+      ],
       "defaultIncrementKg": 1.25,
-      "alternativeIds": ["ex-developpe-couche-machine", "ex-developpe-incline-halteres"],
-      "cues": ["Coudes à 45 degrés du buste"]
+      "alternativeIds": [
+        "ex-developpe-couche-machine",
+        "ex-developpe-incline-halteres"
+      ],
+      "cues": [
+        "Coudes à 45 degrés du buste"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-tirage-poitrine",
@@ -69,11 +129,24 @@
       "equipment": "cable",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["dorsaux"],
-      "secondaryMuscles": ["biceps", "trapezes"],
+      "primaryMuscles": [
+        "dorsaux"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "trapezes"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-tirage-horizontal", "ex-rowing-assis-poulie", "ex-tirage-nuque"],
-      "cues": ["Tirer avec les coudes, pas avec les mains", "Buste très légèrement incliné, sans balancer"]
+      "alternativeIds": [
+        "ex-tirage-horizontal",
+        "ex-rowing-assis-poulie",
+        "ex-tirage-nuque"
+      ],
+      "cues": [
+        "Tirer avec les coudes, pas avec les mains",
+        "Buste très légèrement incliné, sans balancer"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-tirage-nuque",
@@ -81,11 +154,19 @@
       "equipment": "cable",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["dorsaux"],
-      "secondaryMuscles": ["biceps"],
+      "primaryMuscles": [
+        "dorsaux"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-tirage-poitrine", "ex-rowing-assis-poulie"],
-      "cues": []
+      "alternativeIds": [
+        "ex-tirage-poitrine",
+        "ex-rowing-assis-poulie"
+      ],
+      "cues": [],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-developpe-epaules-machine",
@@ -93,11 +174,22 @@
       "equipment": "machine",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["deltoides_ant"],
-      "secondaryMuscles": ["deltoides_lat", "triceps"],
+      "primaryMuscles": [
+        "deltoides_ant"
+      ],
+      "secondaryMuscles": [
+        "deltoides_lat",
+        "triceps"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-developpe-epaules-halteres", "ex-elevations-laterales"],
-      "cues": ["Ne pas hausser les épaules en fin de poussée"]
+      "alternativeIds": [
+        "ex-developpe-epaules-halteres",
+        "ex-elevations-laterales"
+      ],
+      "cues": [
+        "Ne pas hausser les épaules en fin de poussée"
+      ],
+      "loadSemantics": "machine_resistance"
     },
     {
       "id": "ex-developpe-epaules-halteres",
@@ -105,11 +197,19 @@
       "equipment": "dumbbell",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["deltoides_ant"],
-      "secondaryMuscles": ["deltoides_lat", "triceps"],
+      "primaryMuscles": [
+        "deltoides_ant"
+      ],
+      "secondaryMuscles": [
+        "deltoides_lat",
+        "triceps"
+      ],
       "defaultIncrementKg": 1.25,
-      "alternativeIds": ["ex-developpe-epaules-machine"],
-      "cues": []
+      "alternativeIds": [
+        "ex-developpe-epaules-machine"
+      ],
+      "cues": [],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-curl-biceps",
@@ -117,11 +217,23 @@
       "equipment": "dumbbell",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["biceps"],
-      "secondaryMuscles": ["avant_bras"],
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "avant_bras"
+      ],
       "defaultIncrementKg": 1.25,
-      "alternativeIds": ["ex-curl-marteau", "ex-curl-pupitre", "ex-curl-poulie"],
-      "cues": ["Coudes fixes le long du buste", "Pas d'élan des hanches"]
+      "alternativeIds": [
+        "ex-curl-marteau",
+        "ex-curl-pupitre",
+        "ex-curl-poulie"
+      ],
+      "cues": [
+        "Coudes fixes le long du buste",
+        "Pas d'élan des hanches"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-curl-poulie",
@@ -129,11 +241,19 @@
       "equipment": "cable",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["biceps"],
-      "secondaryMuscles": ["avant_bras"],
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "avant_bras"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-curl-biceps", "ex-curl-pupitre"],
-      "cues": []
+      "alternativeIds": [
+        "ex-curl-biceps",
+        "ex-curl-pupitre"
+      ],
+      "cues": [],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-extension-triceps-poulie",
@@ -141,11 +261,19 @@
       "equipment": "cable",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["triceps"],
+      "primaryMuscles": [
+        "triceps"
+      ],
       "secondaryMuscles": [],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-extension-corde", "ex-dips-assistes"],
-      "cues": ["Coudes collés au buste, seuls les avant-bras bougent"]
+      "alternativeIds": [
+        "ex-extension-corde",
+        "ex-dips-assistes"
+      ],
+      "cues": [
+        "Coudes collés au buste, seuls les avant-bras bougent"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-gainage",
@@ -153,11 +281,22 @@
       "equipment": "bodyweight",
       "loadType": "time",
       "unilateral": false,
-      "primaryMuscles": ["abdominaux"],
-      "secondaryMuscles": ["obliques", "lombaires"],
+      "primaryMuscles": [
+        "abdominaux"
+      ],
+      "secondaryMuscles": [
+        "obliques",
+        "lombaires"
+      ],
       "defaultIncrementKg": 0,
-      "alternativeIds": ["ex-gainage-lateral", "ex-crunch-cable"],
-      "cues": ["Bassin en rétroversion, fessiers serrés", "Ne pas creuser le bas du dos"]
+      "alternativeIds": [
+        "ex-gainage-lateral",
+        "ex-crunch-cable"
+      ],
+      "cues": [
+        "Bassin en rétroversion, fessiers serrés",
+        "Ne pas creuser le bas du dos"
+      ]
     },
     {
       "id": "ex-squat-smith",
@@ -165,11 +304,25 @@
       "equipment": "smith",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["quadriceps", "fessiers"],
-      "secondaryMuscles": ["ischios", "lombaires"],
+      "primaryMuscles": [
+        "quadriceps",
+        "fessiers"
+      ],
+      "secondaryMuscles": [
+        "ischios",
+        "lombaires"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-goblet-squat", "ex-presse-cuisses", "ex-fentes-marchees"],
-      "cues": ["Pieds légèrement avancés par rapport à la barre", "Descendre jusqu'à la cuisse parallèle si la mobilité le permet"]
+      "alternativeIds": [
+        "ex-goblet-squat",
+        "ex-presse-cuisses",
+        "ex-fentes-marchees"
+      ],
+      "cues": [
+        "Pieds légèrement avancés par rapport à la barre",
+        "Descendre jusqu'à la cuisse parallèle si la mobilité le permet"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-goblet-squat",
@@ -177,11 +330,23 @@
       "equipment": "dumbbell",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["quadriceps", "fessiers"],
-      "secondaryMuscles": ["abdominaux"],
+      "primaryMuscles": [
+        "quadriceps",
+        "fessiers"
+      ],
+      "secondaryMuscles": [
+        "abdominaux"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-squat-smith", "ex-presse-cuisses"],
-      "cues": ["Coudes à l'intérieur des genoux en bas", "Buste le plus vertical possible"]
+      "alternativeIds": [
+        "ex-squat-smith",
+        "ex-presse-cuisses"
+      ],
+      "cues": [
+        "Coudes à l'intérieur des genoux en bas",
+        "Buste le plus vertical possible"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-fentes-marchees",
@@ -189,11 +354,25 @@
       "equipment": "dumbbell",
       "loadType": "weight",
       "unilateral": true,
-      "primaryMuscles": ["quadriceps", "fessiers"],
-      "secondaryMuscles": ["ischios", "abdominaux"],
+      "primaryMuscles": [
+        "quadriceps",
+        "fessiers"
+      ],
+      "secondaryMuscles": [
+        "ischios",
+        "abdominaux"
+      ],
       "defaultIncrementKg": 1.25,
-      "alternativeIds": ["ex-fentes-statiques", "ex-squat-smith", "ex-presse-cuisses"],
-      "cues": ["Genou arrière proche du sol sans le toucher", "Buste droit, regard loin"]
+      "alternativeIds": [
+        "ex-fentes-statiques",
+        "ex-squat-smith",
+        "ex-presse-cuisses"
+      ],
+      "cues": [
+        "Genou arrière proche du sol sans le toucher",
+        "Buste droit, regard loin"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-fentes-statiques",
@@ -201,11 +380,19 @@
       "equipment": "dumbbell",
       "loadType": "weight",
       "unilateral": true,
-      "primaryMuscles": ["quadriceps", "fessiers"],
-      "secondaryMuscles": ["ischios"],
+      "primaryMuscles": [
+        "quadriceps",
+        "fessiers"
+      ],
+      "secondaryMuscles": [
+        "ischios"
+      ],
       "defaultIncrementKg": 1.25,
-      "alternativeIds": ["ex-fentes-marchees"],
-      "cues": []
+      "alternativeIds": [
+        "ex-fentes-marchees"
+      ],
+      "cues": [],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-developpe-incline-halteres",
@@ -213,11 +400,24 @@
       "equipment": "dumbbell",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["pectoraux"],
-      "secondaryMuscles": ["deltoides_ant", "triceps"],
+      "primaryMuscles": [
+        "pectoraux"
+      ],
+      "secondaryMuscles": [
+        "deltoides_ant",
+        "triceps"
+      ],
       "defaultIncrementKg": 1.25,
-      "alternativeIds": ["ex-developpe-couche-machine", "ex-developpe-couche-halteres", "ex-ecartes-machine"],
-      "cues": ["Banc à 30 degrés maximum", "Ne pas cogner les haltères en haut"]
+      "alternativeIds": [
+        "ex-developpe-couche-machine",
+        "ex-developpe-couche-halteres",
+        "ex-ecartes-machine"
+      ],
+      "cues": [
+        "Banc à 30 degrés maximum",
+        "Ne pas cogner les haltères en haut"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-rowing-assis-poulie",
@@ -225,11 +425,23 @@
       "equipment": "cable",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["dorsaux"],
-      "secondaryMuscles": ["biceps", "trapezes"],
+      "primaryMuscles": [
+        "dorsaux"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "trapezes"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-tirage-horizontal", "ex-tirage-poitrine"],
-      "cues": ["Buste immobile, ne pas balancer", "Serrer les omoplates en fin de tirage"]
+      "alternativeIds": [
+        "ex-tirage-horizontal",
+        "ex-tirage-poitrine"
+      ],
+      "cues": [
+        "Buste immobile, ne pas balancer",
+        "Serrer les omoplates en fin de tirage"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-elevations-laterales",
@@ -237,11 +449,22 @@
       "equipment": "dumbbell",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["deltoides_lat"],
-      "secondaryMuscles": ["trapezes"],
+      "primaryMuscles": [
+        "deltoides_lat"
+      ],
+      "secondaryMuscles": [
+        "trapezes"
+      ],
       "defaultIncrementKg": 1.25,
-      "alternativeIds": ["ex-elevations-laterales-poulie", "ex-developpe-epaules-machine"],
-      "cues": ["Monter jusqu'à l'horizontale, pas au-delà", "Charge légère, mouvement propre"]
+      "alternativeIds": [
+        "ex-elevations-laterales-poulie",
+        "ex-developpe-epaules-machine"
+      ],
+      "cues": [
+        "Monter jusqu'à l'horizontale, pas au-delà",
+        "Charge légère, mouvement propre"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-elevations-laterales-poulie",
@@ -249,11 +472,18 @@
       "equipment": "cable",
       "loadType": "weight",
       "unilateral": true,
-      "primaryMuscles": ["deltoides_lat"],
-      "secondaryMuscles": ["trapezes"],
+      "primaryMuscles": [
+        "deltoides_lat"
+      ],
+      "secondaryMuscles": [
+        "trapezes"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-elevations-laterales"],
-      "cues": []
+      "alternativeIds": [
+        "ex-elevations-laterales"
+      ],
+      "cues": [],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-curl-marteau",
@@ -261,11 +491,20 @@
       "equipment": "dumbbell",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["biceps", "avant_bras"],
+      "primaryMuscles": [
+        "biceps",
+        "avant_bras"
+      ],
       "secondaryMuscles": [],
       "defaultIncrementKg": 1.25,
-      "alternativeIds": ["ex-curl-biceps", "ex-curl-pupitre"],
-      "cues": ["Paumes face à face pendant tout le mouvement"]
+      "alternativeIds": [
+        "ex-curl-biceps",
+        "ex-curl-pupitre"
+      ],
+      "cues": [
+        "Paumes face à face pendant tout le mouvement"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-extension-corde",
@@ -273,11 +512,19 @@
       "equipment": "cable",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["triceps"],
+      "primaryMuscles": [
+        "triceps"
+      ],
       "secondaryMuscles": [],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-extension-triceps-poulie", "ex-dips-assistes"],
-      "cues": ["Écarter la corde en fin d'extension"]
+      "alternativeIds": [
+        "ex-extension-triceps-poulie",
+        "ex-dips-assistes"
+      ],
+      "cues": [
+        "Écarter la corde en fin d'extension"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-crunch-cable",
@@ -285,11 +532,22 @@
       "equipment": "cable",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["abdominaux"],
-      "secondaryMuscles": ["obliques"],
+      "primaryMuscles": [
+        "abdominaux"
+      ],
+      "secondaryMuscles": [
+        "obliques"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-crunch-machine", "ex-releves-genoux", "ex-gainage"],
-      "cues": ["Enrouler le buste, ne pas tirer avec les bras"]
+      "alternativeIds": [
+        "ex-crunch-machine",
+        "ex-releves-genoux",
+        "ex-gainage"
+      ],
+      "cues": [
+        "Enrouler le buste, ne pas tirer avec les bras"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-crunch-machine",
@@ -297,11 +555,19 @@
       "equipment": "machine",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["abdominaux"],
-      "secondaryMuscles": ["obliques"],
+      "primaryMuscles": [
+        "abdominaux"
+      ],
+      "secondaryMuscles": [
+        "obliques"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-crunch-cable", "ex-gainage"],
-      "cues": []
+      "alternativeIds": [
+        "ex-crunch-cable",
+        "ex-gainage"
+      ],
+      "cues": [],
+      "loadSemantics": "machine_resistance"
     },
     {
       "id": "ex-souleve-terre-roumain",
@@ -309,11 +575,25 @@
       "equipment": "barbell",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["ischios", "fessiers"],
-      "secondaryMuscles": ["lombaires", "dorsaux"],
+      "primaryMuscles": [
+        "ischios",
+        "fessiers"
+      ],
+      "secondaryMuscles": [
+        "lombaires",
+        "dorsaux"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-leg-curl", "ex-souleve-terre-halteres"],
-      "cues": ["Dos neutre en permanence", "Barre au contact des cuisses", "Charge légère : le mouvement prime sur le poids"]
+      "alternativeIds": [
+        "ex-leg-curl",
+        "ex-souleve-terre-halteres"
+      ],
+      "cues": [
+        "Dos neutre en permanence",
+        "Barre au contact des cuisses",
+        "Charge légère : le mouvement prime sur le poids"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-souleve-terre-halteres",
@@ -321,11 +601,20 @@
       "equipment": "dumbbell",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["ischios", "fessiers"],
-      "secondaryMuscles": ["lombaires"],
+      "primaryMuscles": [
+        "ischios",
+        "fessiers"
+      ],
+      "secondaryMuscles": [
+        "lombaires"
+      ],
       "defaultIncrementKg": 1.25,
-      "alternativeIds": ["ex-souleve-terre-roumain", "ex-leg-curl"],
-      "cues": []
+      "alternativeIds": [
+        "ex-souleve-terre-roumain",
+        "ex-leg-curl"
+      ],
+      "cues": [],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-leg-extension",
@@ -333,11 +622,19 @@
       "equipment": "machine",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["quadriceps"],
+      "primaryMuscles": [
+        "quadriceps"
+      ],
       "secondaryMuscles": [],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-presse-cuisses", "ex-goblet-squat"],
-      "cues": ["Ne pas claquer l'extension finale"]
+      "alternativeIds": [
+        "ex-presse-cuisses",
+        "ex-goblet-squat"
+      ],
+      "cues": [
+        "Ne pas claquer l'extension finale"
+      ],
+      "loadSemantics": "machine_resistance"
     },
     {
       "id": "ex-ecartes-machine",
@@ -345,11 +642,21 @@
       "equipment": "machine",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["pectoraux"],
-      "secondaryMuscles": ["deltoides_ant"],
+      "primaryMuscles": [
+        "pectoraux"
+      ],
+      "secondaryMuscles": [
+        "deltoides_ant"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-developpe-incline-halteres", "ex-developpe-couche-machine"],
-      "cues": ["Coudes légèrement fléchis et fixes"]
+      "alternativeIds": [
+        "ex-developpe-incline-halteres",
+        "ex-developpe-couche-machine"
+      ],
+      "cues": [
+        "Coudes légèrement fléchis et fixes"
+      ],
+      "loadSemantics": "machine_resistance"
     },
     {
       "id": "ex-tirage-horizontal",
@@ -357,11 +664,22 @@
       "equipment": "cable",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["dorsaux", "trapezes"],
-      "secondaryMuscles": ["biceps"],
+      "primaryMuscles": [
+        "dorsaux",
+        "trapezes"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-rowing-assis-poulie", "ex-tirage-poitrine"],
-      "cues": ["Tirer vers le nombril, coudes près du corps"]
+      "alternativeIds": [
+        "ex-rowing-assis-poulie",
+        "ex-tirage-poitrine"
+      ],
+      "cues": [
+        "Tirer vers le nombril, coudes près du corps"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-face-pull",
@@ -369,11 +687,24 @@
       "equipment": "cable",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["deltoides_post", "trapezes"],
-      "secondaryMuscles": ["biceps"],
+      "primaryMuscles": [
+        "deltoides_post",
+        "trapezes"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-oiseau-halteres", "ex-tirage-horizontal"],
-      "cues": ["Poulie à hauteur du visage", "Tirer vers le front, coudes hauts", "Exercice de santé d'épaule : charge modérée"]
+      "alternativeIds": [
+        "ex-oiseau-halteres",
+        "ex-tirage-horizontal"
+      ],
+      "cues": [
+        "Poulie à hauteur du visage",
+        "Tirer vers le front, coudes hauts",
+        "Exercice de santé d'épaule : charge modérée"
+      ],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-oiseau-halteres",
@@ -381,11 +712,18 @@
       "equipment": "dumbbell",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["deltoides_post"],
-      "secondaryMuscles": ["trapezes"],
+      "primaryMuscles": [
+        "deltoides_post"
+      ],
+      "secondaryMuscles": [
+        "trapezes"
+      ],
       "defaultIncrementKg": 1.25,
-      "alternativeIds": ["ex-face-pull"],
-      "cues": []
+      "alternativeIds": [
+        "ex-face-pull"
+      ],
+      "cues": [],
+      "loadSemantics": "external_weight"
     },
     {
       "id": "ex-curl-pupitre",
@@ -393,11 +731,23 @@
       "equipment": "machine",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["biceps"],
-      "secondaryMuscles": ["avant_bras"],
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [
+        "avant_bras"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-curl-biceps", "ex-curl-marteau", "ex-curl-poulie"],
-      "cues": ["Aisselles bien calées sur le pupitre", "Ne pas verrouiller les coudes en bas"]
+      "alternativeIds": [
+        "ex-curl-biceps",
+        "ex-curl-marteau",
+        "ex-curl-poulie"
+      ],
+      "cues": [
+        "Aisselles bien calées sur le pupitre",
+        "Ne pas verrouiller les coudes en bas"
+      ],
+      "loadSemantics": "machine_resistance"
     },
     {
       "id": "ex-dips-assistes",
@@ -405,11 +755,28 @@
       "equipment": "machine",
       "loadType": "weight",
       "unilateral": false,
-      "primaryMuscles": ["triceps", "pectoraux"],
-      "secondaryMuscles": ["deltoides_ant"],
+      "primaryMuscles": [
+        "triceps",
+        "pectoraux"
+      ],
+      "secondaryMuscles": [
+        "deltoides_ant"
+      ],
       "defaultIncrementKg": 2.5,
-      "alternativeIds": ["ex-extension-corde", "ex-extension-triceps-poulie"],
-      "cues": ["Buste vertical pour cibler les triceps", "Descente contrôlée, épaules basses", "Attention : sur machine assistée, plus de charge = plus d'assistance"]
+      "alternativeIds": [
+        "ex-extension-corde",
+        "ex-extension-triceps-poulie"
+      ],
+      "cues": [
+        "Buste vertical pour cibler les triceps",
+        "Descente contrôlée, épaules basses",
+        "Attention : sur machine assistée, plus de charge = plus d'assistance"
+      ],
+      "loadSemantics": "assistance",
+      "minReps": 8,
+      "maxReps": 15,
+      "targetRirMin": 1,
+      "targetRirMax": 2
     },
     {
       "id": "ex-releves-genoux",
@@ -417,11 +784,21 @@
       "equipment": "bodyweight",
       "loadType": "reps",
       "unilateral": false,
-      "primaryMuscles": ["abdominaux"],
-      "secondaryMuscles": ["obliques"],
+      "primaryMuscles": [
+        "abdominaux"
+      ],
+      "secondaryMuscles": [
+        "obliques"
+      ],
       "defaultIncrementKg": 0,
-      "alternativeIds": ["ex-crunch-cable", "ex-gainage"],
-      "cues": ["Enrouler le bassin, ne pas seulement lever les cuisses", "Éviter le balancement"]
+      "alternativeIds": [
+        "ex-crunch-cable",
+        "ex-gainage"
+      ],
+      "cues": [
+        "Enrouler le bassin, ne pas seulement lever les cuisses",
+        "Éviter le balancement"
+      ]
     },
     {
       "id": "ex-gainage-lateral",
@@ -429,11 +806,20 @@
       "equipment": "bodyweight",
       "loadType": "time",
       "unilateral": true,
-      "primaryMuscles": ["obliques"],
-      "secondaryMuscles": ["abdominaux", "lombaires"],
+      "primaryMuscles": [
+        "obliques"
+      ],
+      "secondaryMuscles": [
+        "abdominaux",
+        "lombaires"
+      ],
       "defaultIncrementKg": 0,
-      "alternativeIds": ["ex-gainage"],
-      "cues": ["Corps aligné, hanche haute"]
+      "alternativeIds": [
+        "ex-gainage"
+      ],
+      "cues": [
+        "Corps aligné, hanche haute"
+      ]
     },
     {
       "id": "ex-marche-inclinee",
@@ -442,10 +828,21 @@
       "loadType": "time",
       "unilateral": false,
       "primaryMuscles": [],
-      "secondaryMuscles": ["quadriceps", "fessiers", "mollets"],
+      "secondaryMuscles": [
+        "quadriceps",
+        "fessiers",
+        "mollets"
+      ],
       "defaultIncrementKg": 0,
-      "alternativeIds": ["ex-velo", "ex-elliptique", "ex-tapis"],
-      "cues": ["Fréquence cardiaque cible 110-130 bpm", "Rester capable de parler"]
+      "alternativeIds": [
+        "ex-velo",
+        "ex-elliptique",
+        "ex-tapis"
+      ],
+      "cues": [
+        "Fréquence cardiaque cible 110-130 bpm",
+        "Rester capable de parler"
+      ]
     },
     {
       "id": "ex-velo",
@@ -454,10 +851,19 @@
       "loadType": "time",
       "unilateral": false,
       "primaryMuscles": [],
-      "secondaryMuscles": ["quadriceps", "mollets"],
+      "secondaryMuscles": [
+        "quadriceps",
+        "mollets"
+      ],
       "defaultIncrementKg": 0,
-      "alternativeIds": ["ex-marche-inclinee", "ex-elliptique", "ex-rameur"],
-      "cues": ["Fréquence cardiaque cible 110-130 bpm"]
+      "alternativeIds": [
+        "ex-marche-inclinee",
+        "ex-elliptique",
+        "ex-rameur"
+      ],
+      "cues": [
+        "Fréquence cardiaque cible 110-130 bpm"
+      ]
     },
     {
       "id": "ex-rameur",
@@ -466,10 +872,19 @@
       "loadType": "time",
       "unilateral": false,
       "primaryMuscles": [],
-      "secondaryMuscles": ["dorsaux", "quadriceps", "biceps"],
+      "secondaryMuscles": [
+        "dorsaux",
+        "quadriceps",
+        "biceps"
+      ],
       "defaultIncrementKg": 0,
-      "alternativeIds": ["ex-velo", "ex-elliptique"],
-      "cues": ["Jambes, puis buste, puis bras"]
+      "alternativeIds": [
+        "ex-velo",
+        "ex-elliptique"
+      ],
+      "cues": [
+        "Jambes, puis buste, puis bras"
+      ]
     },
     {
       "id": "ex-elliptique",
@@ -478,9 +893,15 @@
       "loadType": "time",
       "unilateral": false,
       "primaryMuscles": [],
-      "secondaryMuscles": ["quadriceps", "fessiers"],
+      "secondaryMuscles": [
+        "quadriceps",
+        "fessiers"
+      ],
       "defaultIncrementKg": 0,
-      "alternativeIds": ["ex-velo", "ex-marche-inclinee"],
+      "alternativeIds": [
+        "ex-velo",
+        "ex-marche-inclinee"
+      ],
       "cues": []
     },
     {
@@ -490,10 +911,18 @@
       "loadType": "time",
       "unilateral": false,
       "primaryMuscles": [],
-      "secondaryMuscles": ["quadriceps", "mollets"],
+      "secondaryMuscles": [
+        "quadriceps",
+        "mollets"
+      ],
       "defaultIncrementKg": 0,
-      "alternativeIds": ["ex-marche-inclinee", "ex-elliptique"],
-      "cues": ["Fréquence cardiaque cible 110-130 bpm"]
+      "alternativeIds": [
+        "ex-marche-inclinee",
+        "ex-elliptique"
+      ],
+      "cues": [
+        "Fréquence cardiaque cible 110-130 bpm"
+      ]
     }
   ]
 }
