@@ -16,6 +16,7 @@ import {
 } from '../domain/progress';
 import { toDateStr } from '../lib/date';
 import { evaluateCoach, type MuscleWeekVolume } from '../domain/coach';
+import { recomputeAllExerciseMemories } from './exercise-memory.repo';
 
 interface ExerciseLiftHistory {
   exerciseId: string;
@@ -94,7 +95,10 @@ export async function getProgressSnapshot(now: Date = new Date()): Promise<Progr
         .get(workout.id)!
         .filter(
           (setLog) =>
-            !setLog.isWarmup && setLog.weightKg != null && setLog.reps != null,
+            !setLog.isWarmup &&
+            (setLog.setKind ?? 'work') === 'work' &&
+            setLog.weightKg != null &&
+            setLog.reps != null,
         );
       if (weightSets.length === 0) continue;
 
@@ -124,6 +128,11 @@ export async function getProgressSnapshot(now: Date = new Date()): Promise<Progr
           return e1rms.length > 0 ? Math.max(...e1rms) : null;
         })(),
         workSetReps: weightSets.map((setLog) => setLog.reps!),
+        workSets: weightSets.map((setLog) => ({
+          reps: setLog.reps!,
+          rir: setLog.rir,
+          weightKg: setLog.weightKg!,
+        })),
         repsTarget:
           workout.templateSnapshot.find((item) => item.exerciseId === exerciseId)?.repsTarget ?? null,
         setsTarget:
@@ -282,25 +291,36 @@ export async function getProgressSnapshot(now: Date = new Date()): Promise<Progr
   const coachSuggestions = evaluateCoach({
     phase,
     phaseChanged,
-    exercises: histories.map((history) => ({
-      exerciseId: history.exerciseId,
-      name: history.name,
-      incrementKg: exerciseById.get(history.exerciseId)?.defaultIncrementKg ?? 2.5,
-      sessions: history.sessions.map((session) => ({
-        date: session.workoutDate,
-        maxWeightKg: session.maxWeightKg,
-        maxE1rm: session.maxE1rm,
-        workSetReps: session.workSetReps ?? [],
-        repsTarget: session.repsTarget ?? null,
-        setsTarget: session.setsTarget ?? null,
-        averageRir: session.averageRir ?? null,
-        isDeload: session.isDeload ?? false,
-      })),
-    })),
+    exercises: histories.map((history) => {
+      const exercise = exerciseById.get(history.exerciseId);
+      return {
+        exerciseId: history.exerciseId,
+        name: history.name,
+        incrementKg: exercise?.defaultIncrementKg ?? 2.5,
+        loadSemantics: exercise?.loadSemantics,
+        minReps: exercise?.minReps ?? undefined,
+        maxReps: exercise?.maxReps ?? undefined,
+        targetRirMin: exercise?.targetRirMin ?? undefined,
+        targetRirMax: exercise?.targetRirMax ?? undefined,
+        sessions: history.sessions.map((session) => ({
+          date: session.workoutDate,
+          maxWeightKg: session.maxWeightKg,
+          maxE1rm: session.maxE1rm,
+          workSetReps: session.workSetReps ?? [],
+          repsTarget: session.repsTarget ?? null,
+          setsTarget: session.setsTarget ?? null,
+          averageRir: session.averageRir ?? null,
+          isDeload: session.isDeload ?? false,
+          workSets: session.workSets,
+        })),
+      };
+    }),
     muscleVolumes: muscleWeekVolumes,
     recentFatigueLevels: recentRecovery.map((workout) => workout.fatigueLevel).filter((value): value is number => value != null),
     recentPainLevels: recentRecovery.map((workout) => workout.painLevel).filter((value): value is number => value != null),
   });
+
+  await recomputeAllExerciseMemories();
 
   return {
     hasAnyCompletedWorkout: completedWorkouts.length > 0,

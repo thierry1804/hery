@@ -52,6 +52,7 @@ export interface ExerciseSessionLift {
   tonnageKg: number;
   maxE1rm: number | null;
   workSetReps?: number[];
+  workSets?: { reps: number; rir: number | null; weightKg: number }[];
   repsTarget?: number | null;
   setsTarget?: number | null;
   averageRir?: number | null;

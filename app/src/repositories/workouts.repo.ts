@@ -12,6 +12,7 @@ import {
 } from '../domain/workout-exercise-status';
 import { isWarmupFromKind, normalizeRir, type SetKind } from '../domain/set-kind';
 import { runSync } from '../sync/runSync';
+import { recomputeAllExerciseMemories } from './exercise-memory.repo';
 import type {
   CardioLog,
   PrescribedItem,
@@ -566,6 +567,7 @@ export async function completeWorkout(workoutId: string): Promise<void> {
     totalTonnageKg: tonnage,
     updatedAt: ts,
   });
+  await recomputeAllExerciseMemories();
   void runSync();
 }
 
