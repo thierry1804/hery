@@ -2,8 +2,10 @@
 
 import type { ExerciseCompletionStatus } from '../domain/workout-exercise-status';
 import type { SetKind } from '../domain/set-kind';
+import type { LoadSemantics } from '../domain/load-semantics';
 export type { ExerciseCompletionStatus };
 export type { SetKind };
+export type { LoadSemantics };
 
 export type MuscleGroup =
   | 'quadriceps'
@@ -49,6 +51,27 @@ export interface Exercise extends Common {
   defaultIncrementKg: number;
   alternativeIds: string[];
   cues: string[];
+  loadSemantics?: LoadSemantics;
+  minReps?: number | null;
+  maxReps?: number | null;
+  targetRirMin?: number | null;
+  targetRirMax?: number | null;
+}
+
+export interface ExerciseProgressionMemory {
+  exerciseId: string;
+  status: 'increase' | 'hold' | 'decrease' | 'repeat' | 'watch';
+  currentLoadKg: number | null;
+  suggestedLoadKg: number | null;
+  targetReps: [number, number];
+  targetRir: [number, number];
+  confidence: 'high' | 'medium' | 'low';
+  consecutiveSuccesses: number;
+  consecutiveFailures: number;
+  lastReason: string;
+  lastEvaluatedAt: string;
+  comparableHistory: boolean;
+  updatedAt: string;
 }
 
 export interface Phase {

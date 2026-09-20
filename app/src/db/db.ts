@@ -1,6 +1,7 @@
 import Dexie, { type Table } from 'dexie';
 import type {
   Exercise,
+  ExerciseProgressionMemory,
   ProgramCycle,
   SessionTemplate,
   PrescribedItem,
@@ -27,6 +28,7 @@ export class HeryDB extends Dexie {
   progressPhotos!: Table<ProgressPhoto, string>;
   proteinEntries!: Table<ProteinEntry, string>;
   settings!: Table<Setting, string>;
+  exerciseProgressionMemory!: Table<ExerciseProgressionMemory, string>;
 
   constructor() {
     super('hery');
@@ -94,6 +96,22 @@ export class HeryDB extends Dexie {
             }
           });
       });
+
+    this.version(4).stores({
+      exercises: 'id, name, *primaryMuscles, equipment, updatedAt',
+      cycles: 'id, startDate, updatedAt',
+      sessionTemplates: 'id, cycleId, code, dayOfWeek, updatedAt',
+      prescribedItems: 'id, sessionTemplateId, [sessionTemplateId+order], exerciseId',
+      workouts: 'id, date, status, sessionTemplateId, updatedAt',
+      workoutExercises: 'id, workoutId, exerciseId, [workoutId+order]',
+      setLogs: 'id, workoutExerciseId, [workoutExerciseId+index], completedAt, isPR',
+      cardioLogs: 'id, workoutId, date',
+      bodyMetrics: 'id, date',
+      progressPhotos: 'id, date, pose',
+      proteinEntries: 'id, date',
+      settings: 'key',
+      exerciseProgressionMemory: 'exerciseId, updatedAt',
+    });
   }
 }
 
