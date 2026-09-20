@@ -1,9 +1,17 @@
 .list { display: grid; gap: 10px; }
 .card { border: 1px solid var(--fonte-500); padding: 12px; background: var(--fonte-700); }
 .blocked { opacity: 0.78; }
-.heading { display: flex; gap: 8px; align-items: baseline; }
+.heading { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.action {
+  color: var(--fonte-900);
+  background: var(--acier);
+  font: 700 12px/1 var(--font-body);
+  padding: 4px 8px;
+  border-radius: var(--radius-button);
+}
 .rule { color: var(--laiton); font: 700 12px/1 var(--font-body); }
 .weight { margin: 6px 0 0; font-size: 24px; font-weight: 800; }
 .explanation, .empty { margin: 5px 0 0; color: var(--fonte-300); font-size: 14px; line-height: 1.4; }
+.confidence { margin: 4px 0 0; color: var(--fonte-300); font-size: 12px; }
 .accept { margin-top: 10px; min-height: 56px; width: 100%; border: 1px solid var(--magnesie); border-radius: var(--radius-button); background: transparent; font-weight: 700; }
 .accept:disabled { border-color: var(--fonte-500); color: var(--fonte-300); }

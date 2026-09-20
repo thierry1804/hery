@@ -9,15 +9,20 @@
 
 .topbar {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 var(--space-4) var(--space-2);
+  flex: 0 0 auto;
+}
+
+.topbarRow {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-4);
-  min-height: 40px;
-  border-bottom: 1px solid var(--fonte-700);
+  min-height: 44px;
   font-size: var(--fs-14);
   color: var(--fonte-300);
-  flex: 0 0 auto;
 }
 
 .exit {
@@ -26,7 +31,7 @@
   color: var(--fonte-300);
   font-size: var(--fs-14);
   font-weight: 500;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0;
   cursor: pointer;
   text-align: left;
@@ -48,59 +53,41 @@
   white-space: nowrap;
 }
 
-.hero {
-  position: relative;
-  flex: 0 2 auto;
-  width: 100%;
-  height: clamp(140px, 24dvh, 200px);
-  max-height: 28dvh;
-  min-height: 64px;
+.progressTrack {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 3px;
+  height: 4px;
+}
+
+.progressSeg {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--fonte-500);
+}
+
+.progressSegActive {
+  background: color-mix(in srgb, var(--acier) 55%, var(--fonte-500));
+}
+
+.progressSegCurrent {
+  background: var(--acier);
+}
+
+.exercisePane {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 var(--space-4);
   overflow: hidden;
 }
 
-.heroDense {
-  height: clamp(88px, 14dvh, 120px);
-  max-height: 16dvh;
-  min-height: 56px;
-}
-
-.heroDense .heroScrim {
-  padding: var(--space-3) var(--space-4) var(--space-2);
-}
-
-.heroDense .exerciseName {
-  font-size: var(--fs-20);
-}
-
-@media (max-height: 700px) {
-  .hero:not(.heroDense) {
-    height: clamp(100px, 18dvh, 140px);
-  }
-
-  .controls {
-    gap: var(--space-1);
-    padding-top: var(--space-1);
-  }
-
-  .actions {
-    padding-top: var(--space-2);
-    gap: var(--space-1);
-  }
-}
-
-.heroScrim {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: var(--space-5) var(--space-4) var(--space-3);
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(19, 21, 25, 0.55) 35%,
-    rgba(19, 21, 25, 0.92) 100%
-  );
-  pointer-events: none;
+.titleBlock {
+  flex: 0 0 auto;
 }
 
 .header {
@@ -115,11 +102,10 @@
   font-family: var(--font-display);
   font-stretch: var(--font-display-stretch);
   font-weight: 800;
-  font-size: var(--fs-28);
-  line-height: 1.15;
+  font-size: 32px;
+  line-height: 1.1;
   margin: 0;
   color: var(--magnesie);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 .headerIcon {
@@ -132,19 +118,22 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-2) var(--space-3);
-  margin-top: var(--space-2);
+  margin-top: 6px;
 }
 
 .lastTime {
   color: #c5c9d1;
   font-size: var(--fs-14);
   margin: 0;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .machineSettings {
   color: #a8b0bd;
   font-size: var(--fs-12);
   margin: 0;
+  width: 100%;
 }
 
 .setBadge {
@@ -154,6 +143,7 @@
   font-weight: 700;
   font-size: var(--fs-14);
   color: var(--acier);
+  white-space: nowrap;
 }
 
 .supersetHint {
@@ -166,97 +156,82 @@
   color: var(--acier);
 }
 
-.setList {
-  flex: 0 1 auto;
-  min-height: 0;
-  max-height: min(40dvh, 280px);
-  margin: 0;
-  border-top: 1px solid var(--fonte-500);
-  border-bottom: 1px solid var(--fonte-500);
-  overflow: hidden;
-}
-
 .controls {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: stretch;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4) 0;
-}
-
-.timeHint {
-  margin: 0;
-  text-align: center;
-  color: var(--fonte-300);
-  font-size: var(--fs-16);
-}
-
-.weightRow,
-.repsRow,
-.timeRow {
-  display: flex;
-  justify-content: center;
-}
-
-.weightRow {
-  padding: 0;
-}
-
-.repsRow {
-  opacity: 0.95;
-}
-
-.restRow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  opacity: 0.85;
-}
-
-.restLabel {
-  color: var(--fonte-300);
-  font-size: var(--fs-12);
+  gap: 10px;
+  min-width: 0;
 }
 
 .actions {
   flex: 0 0 auto;
-  padding: var(--space-3) var(--space-4);
-  padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  margin-top: auto;
+  padding-top: var(--space-2);
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  background: linear-gradient(180deg, transparent 0%, var(--fonte-900) 18%);
+}
+
+.validateBtn {
+  min-height: 60px;
+  height: 60px;
+  background: var(--acier) !important;
+  color: var(--fonte-900) !important;
+}
+
+.validateBtn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--acier) 88%, white) !important;
+}
+
+.validateBtn:active:not(:disabled) {
+  background: color-mix(in srgb, var(--acier) 80%, black) !important;
 }
 
 .secondary {
-  display: flex;
-  gap: var(--space-3);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
 }
 
-.secondary > * {
-  flex: 1;
+.secondaryBtn {
+  min-height: 46px;
+  height: 46px;
+  font-size: var(--fs-12);
+  letter-spacing: 0;
+  padding: 0 4px;
+  white-space: nowrap;
+  overflow: visible;
 }
 
 .undoSet {
   align-self: center;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-1);
   background: none;
   border: none;
   color: var(--fonte-300);
   font-size: var(--fs-12);
-  min-height: 36px;
+  min-height: 44px;
+  height: 44px;
   padding: 0 var(--space-2);
   cursor: pointer;
 }
 
 .undoSet:hover {
   color: var(--magnesie);
+}
+
+.undoSet:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.undoSet:disabled:hover {
+  color: var(--fonte-300);
 }
 
 /* Warmup / stretch / cardio keep shared layout helpers */
@@ -333,6 +308,21 @@
   overflow: hidden;
 }
 
+.heroScrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--space-5) var(--space-4) var(--space-3);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(19, 21, 25, 0.55) 35%,
+    rgba(19, 21, 25, 0.92) 100%
+  );
+  pointer-events: none;
+}
+
 .cardioDuration {
   flex: 0 0 auto;
   display: flex;
@@ -388,11 +378,23 @@
 
 .prBanner {
   margin: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) 0;
   color: var(--laiton);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: var(--fs-14);
+  flex: 0 0 auto;
+}
+
+.setHint {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--fonte-700);
+  border: 1px solid var(--fonte-500);
+  color: var(--magnesie);
+  font-size: var(--fs-14);
+  line-height: 1.35;
+  flex: 0 0 auto;
 }
 
 .durationHint {
@@ -444,9 +446,82 @@
   color: var(--laiton, #c4a35a);
   font-size: var(--fs-14);
 }
-.recoveryForm { display: grid; gap: 8px; width: min(100%, 360px); margin: 18px auto; text-align: left; }
-.recoveryForm p { margin: 4px 0 0; font-weight: 700; }
-.recoveryForm input[type='number'], .recoveryForm input[type='text'], .recoveryForm input:not([type]) { width: 100%; box-sizing: border-box; padding: 10px; }
-.recoveryChoices { display: flex; gap: 8px; }
-.recoveryChoices button { min-width: 56px; min-height: 56px; border: 1px solid var(--fonte-500); border-radius: var(--radius-button); background: var(--fonte-700); color: inherit; }
-.recoveryChoices button[aria-pressed='true'] { border-color: var(--laiton); color: var(--laiton); }
+
+.recoveryForm {
+  display: grid;
+  gap: 8px;
+  width: min(100%, 360px);
+  margin: 18px auto;
+  text-align: left;
+}
+
+.recoveryForm p {
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+
+.recoveryForm input[type='number'],
+.recoveryForm input[type='text'],
+.recoveryForm input:not([type]) {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+}
+
+.recoveryChoices {
+  display: flex;
+  gap: 8px;
+}
+
+.recoveryChoices button {
+  min-width: 56px;
+  min-height: 56px;
+  border: 1px solid var(--fonte-500);
+  border-radius: var(--radius-button);
+  background: var(--fonte-700);
+  color: inherit;
+}
+
+.recoveryChoices button[aria-pressed='true'] {
+  border-color: var(--laiton);
+  color: var(--laiton);
+}
+
+@media (max-height: 700px) {
+  .exercisePane {
+    gap: 6px;
+  }
+
+  .exerciseName {
+    font-size: 24px;
+  }
+
+  .metaRow {
+    margin-top: 4px;
+  }
+
+  .lastTime,
+  .setBadge {
+    font-size: var(--fs-12);
+  }
+
+  .controls {
+    gap: 6px;
+  }
+
+  .actions {
+    gap: 6px;
+    padding-bottom: calc(48px + env(safe-area-inset-bottom));
+  }
+
+  .validateBtn {
+    min-height: 52px;
+    height: 52px;
+    font-size: var(--fs-16);
+  }
+
+  .secondaryBtn {
+    min-height: 44px;
+    height: 44px;
+  }
+}

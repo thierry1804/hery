@@ -4,10 +4,16 @@ import type { Exercise, PrescribedItem, SessionTemplate, Workout } from '../../d
 import { getAllTemplates, getPrescribedItems, getTemplateForDay } from '../../repositories/program.repo';
 import { getExercisesByIds } from '../../repositories/exercises.repo';
 import { getResumableWorkout, startWorkout } from '../../repositories/workouts.repo';
+import {
+  getMemoriesByExerciseIds,
+  recomputeAllExerciseMemories,
+} from '../../repositories/exercise-memory.repo';
+import { db } from '../../db/db';
 import { dayOfWeekIso } from '../../lib/date';
 import { BigButton } from '../../ui/BigButton';
 import { FlameIcon, HeartIcon, StretchIcon } from '../../ui/icons';
 import { TodayProgressCard } from '../progress/TodayProgressCard';
+import { SessionBrief } from './SessionBrief';
 import styles from './TodayScreen.module.css';
 
 const DAY_NAMES = ['', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
@@ -42,6 +48,8 @@ export function TodayScreen() {
   const [exercisesById, setExercisesById] = useState<Map<string, Exercise>>(new Map());
   const [resumable, setResumable] = useState<Workout | undefined>(undefined);
   const [allTemplates, setAllTemplates] = useState<SessionTemplate[]>([]);
+  const [briefLines, setBriefLines] = useState<{ name: string; text: string }[]>([]);
+  const [painWatch, setPainWatch] = useState(false);
 
   const loadTemplate = async (tpl: SessionTemplate) => {
     setTemplate(tpl);
@@ -50,6 +58,36 @@ export function TodayScreen() {
     const ids = Array.from(new Set(prescribed.map((i) => i.exerciseId).filter((x): x is string => !!x)));
     const exs = await getExercisesByIds(ids);
     setExercisesById(new Map(exs.map((e) => [e.id, e])));
+
+    let memories = await getMemoriesByExerciseIds(ids);
+    if (memories.size === 0 && ids.length > 0) {
+      await recomputeAllExerciseMemories();
+      memories = await getMemoriesByExerciseIds(ids);
+    }
+    const lines: { name: string; text: string }[] = [];
+    for (const id of ids) {
+      const mem = memories.get(id);
+      const name = exs.find((e) => e.id === id)?.name;
+      if (!mem || !name) continue;
+      const load =
+        mem.suggestedLoadKg != null
+          ? `${mem.suggestedLoadKg.toLocaleString('fr-FR')} kg`
+          : mem.currentLoadKg != null
+            ? `${mem.currentLoadKg.toLocaleString('fr-FR')} kg`
+            : null;
+      const text =
+        mem.status === 'hold' && load
+          ? `Maintiens ${load}, vise ${mem.targetReps[0]}–${mem.targetReps[1]} reps à RIR ${mem.targetRir[0]}–${mem.targetRir[1]}`
+          : mem.lastReason;
+      lines.push({ name, text });
+    }
+    setBriefLines(lines);
+
+    const recent = await db.workouts
+      .filter((w) => w.deletedAt == null && w.status === 'completed')
+      .toArray();
+    recent.sort((a, b) => (a.date < b.date ? 1 : -1));
+    setPainWatch((recent[0]?.painLevel ?? 0) >= 5);
   };
 
   useEffect(() => {
@@ -176,6 +214,8 @@ export function TodayScreen() {
           </div>
         )}
       </div>
+
+      <SessionBrief lines={briefLines} painWatch={painWatch} />
 
       <TodayProgressCard />
 

@@ -1,7 +1,36 @@
-import type { CoachSuggestion } from '../../domain/coach';
+import type { CoachAction, CoachSuggestion } from '../../domain/coach';
 import styles from './CoachSuggestions.module.css';
 import { useState } from 'react';
 import { acceptCoachTarget } from '../../repositories/coach-target.repo';
+
+const ACTION_LABEL: Record<CoachAction, string> = {
+  increase: 'Augmenter',
+  hold: 'Consolider',
+  decrease: 'Réduire',
+  repeat: 'Répéter',
+  watch: 'Surveiller',
+  deload: 'Deload',
+  vary: 'Varier',
+  inform: 'Info',
+};
+
+const CONFIDENCE_LABEL = {
+  high: 'confiance haute',
+  medium: 'confiance moyenne',
+  low: 'confiance faible',
+} as const;
+
+function canAccept(suggestion: CoachSuggestion): boolean {
+  return (
+    suggestion.exerciseId != null &&
+    suggestion.suggestedWeightKg != null &&
+    !suggestion.blocked &&
+    (suggestion.action === 'increase' ||
+      suggestion.action === 'decrease' ||
+      suggestion.action === 'hold' ||
+      suggestion.action === 'repeat')
+  );
+}
 
 export function CoachSuggestions({ suggestions }: { suggestions: CoachSuggestion[] }) {
   const [acceptedIds, setAcceptedIds] = useState<Set<string>>(new Set());
@@ -13,6 +42,7 @@ export function CoachSuggestions({ suggestions }: { suggestions: CoachSuggestion
       {suggestions.map((suggestion) => (
         <article className={`${styles.card} ${suggestion.blocked ? styles.blocked : ''}`} key={suggestion.id}>
           <div className={styles.heading}>
+            <span className={styles.action}>{ACTION_LABEL[suggestion.action]}</span>
             <span className={styles.rule}>{suggestion.ruleId}</span>
             <strong>{suggestion.title}</strong>
           </div>
@@ -20,12 +50,17 @@ export function CoachSuggestions({ suggestions }: { suggestions: CoachSuggestion
             <p className={styles.weight}>{suggestion.suggestedWeightKg.toLocaleString('fr-FR')} kg</p>
           ) : null}
           <p className={styles.explanation}>{suggestion.explanation}</p>
-          {suggestion.exerciseId && suggestion.suggestedWeightKg != null && !suggestion.blocked ? (
+          <p className={styles.confidence}>{CONFIDENCE_LABEL[suggestion.confidence]}</p>
+          {canAccept(suggestion) ? (
             <button
               type="button"
               className={styles.accept}
               disabled={acceptedIds.has(suggestion.id)}
-              onClick={() => void acceptCoachTarget(suggestion.exerciseId!, suggestion.suggestedWeightKg!).then(() => setAcceptedIds((current) => new Set(current).add(suggestion.id)))}
+              onClick={() =>
+                void acceptCoachTarget(suggestion.exerciseId!, suggestion.suggestedWeightKg!).then(() =>
+                  setAcceptedIds((current) => new Set(current).add(suggestion.id)),
+                )
+              }
             >
               {acceptedIds.has(suggestion.id) ? 'Charge retenue' : 'Utiliser à la prochaine séance'}
             </button>

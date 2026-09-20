@@ -39,7 +39,8 @@ import { NoteDialog } from './NoteDialog';
 import { useWakeLock } from './useWakeLock';
 import { useSessionStore } from './session.store';
 import { confirmSetFeedback } from '../../lib/haptics';
-import { FlameIcon, HeartIcon, PencilIcon, StretchIcon, SwapIcon, UndoIcon } from '../../ui/icons';
+import { FlameIcon, HeartIcon, PencilIcon, SkipIcon, StretchIcon, SwapIcon, UndoIcon } from '../../ui/icons';
+import { midSetHint } from '../../domain/coach-midset';
 import styles from './ActiveSessionScreen.module.css';
 import { getAcceptedCoachTarget } from '../../repositories/coach-target.repo';
 
@@ -130,6 +131,7 @@ export function ActiveSessionScreen() {
   const [setKind, setSetKind] = useState<SetKind>('work');
   const [rir, setRir] = useState<number | null>(null);
   const [prBannerKinds, setPrBannerKinds] = useState<PrKind[]>([]);
+  const [setHint, setSetHint] = useState<string | null>(null);
 
   const [modality, setModality] = useState<CardioModality>('marche_inclinee');
   const [showSubstitute, setShowSubstitute] = useState(false);
@@ -320,12 +322,15 @@ export function ActiveSessionScreen() {
   const totalSteps = steps.length;
   const currentItem = activeItem(step, subIndex);
   const forceTotalSets = currentItem ? (currentItem.sets ?? 1) : 0;
-  const forceDenseHero = forceTotalSets >= 4;
   const forceExerciseTitle = currentItem
     ? ((currentExerciseId && exercisesById.get(currentExerciseId)?.name) ??
       (currentItem.exerciseId && exercisesById.get(currentItem.exerciseId)?.name) ??
       currentItem.label)
     : '';
+  const sessionTitle = sessionLabel.replace(/\s+-\s+/g, ' · ');
+  const activeExercise = exercisesById.get(currentExerciseId ?? '');
+  const weightStep = Math.max(activeExercise?.defaultIncrementKg ?? 2.5, 1.25);
+  const isUnilateral = activeExercise?.unilateral ?? false;
 
   const restNextHint = (() => {
     if (!pendingAdvance) return `Série ${setIndex}`;
@@ -378,6 +383,7 @@ export function ActiveSessionScreen() {
       setWorkoutExerciseId(null);
       setLoggedSets([]);
       setPrBannerKinds([]);
+      setSetHint(null);
       setSetIndex(1);
       setSubIndex(0);
       setPendingAdvance(false);
@@ -458,6 +464,14 @@ export function ActiveSessionScreen() {
     confirmSetFeedback();
     const sets = await getSetLogs(weId);
     setLoggedSets(sets);
+    setSetHint(
+      midSetHint({
+        rir,
+        reps,
+        maxReps: currentItem.repsTarget ?? exercise?.maxReps ?? 12,
+        setKind,
+      }),
+    );
 
     if (step.kind === 'superset' && subIndex + 1 < step.items.length) {
       setCurrentExerciseId(null);
@@ -534,12 +548,22 @@ export function ActiveSessionScreen() {
   return (
     <div className={styles.screen}>
       <div className={styles.topbar}>
-        <button type="button" className={styles.exit} onClick={() => navigate('/')}>
-          ← {sessionLabel}
-        </button>
-        <span className={`tabular ${styles.progress}`}>
-          {itemIndex + 1} / {totalSteps}
-        </span>
+        <div className={styles.topbarRow}>
+          <button type="button" className={styles.exit} onClick={() => navigate('/')}>
+            ← {sessionTitle}
+          </button>
+          <span className={`tabular ${styles.progress}`}>
+            {itemIndex + 1} / {totalSteps}
+          </span>
+        </div>
+        <div className={styles.progressTrack} aria-hidden="true">
+          {Array.from({ length: totalSteps }, (_, i) => (
+            <span
+              key={i}
+              className={`${styles.progressSeg} ${i <= itemIndex ? styles.progressSegActive : ''} ${i === itemIndex ? styles.progressSegCurrent : ''}`}
+            />
+          ))}
+        </div>
       </div>
 
       {step.kind === 'warmup' || step.kind === 'stretch' ? (
@@ -610,13 +634,8 @@ export function ActiveSessionScreen() {
         />
       ) : (
         <>
-          <div className={`${styles.hero} ${forceDenseHero ? styles.heroDense : ''}`}>
-            <ExerciseIllustration
-              variant={forceDenseHero ? 'heroDense' : 'hero'}
-              exerciseId={currentExerciseId ?? currentItem?.exerciseId ?? null}
-              name={forceExerciseTitle}
-            />
-            <div className={styles.heroScrim}>
+          <div className={styles.exercisePane}>
+            <div className={styles.titleBlock}>
               <h1 className={styles.exerciseName}>{forceExerciseTitle}</h1>
               <div className={styles.metaRow}>
                 {step.kind === 'superset' && (
@@ -633,96 +652,123 @@ export function ActiveSessionScreen() {
                 </span>
               </div>
             </div>
-          </div>
 
-          <div className={styles.setList}>
-            <SetInput
-              loggedSets={loggedSets}
-              totalSets={forceTotalSets}
-              activeIndex={setIndex}
-              unilateral={
-                currentExerciseId ? (exercisesById.get(currentExerciseId)?.unilateral ?? false) : false
-              }
-            />
-          </div>
+            <SetInput loggedSets={loggedSets} unilateral={isUnilateral} />
 
-          {prBannerKinds.length > 0 ? (
-            <p className={styles.prBanner}>{formatPrBanner(prBannerKinds)}</p>
-          ) : null}
+            {prBannerKinds.length > 0 ? (
+              <p className={styles.prBanner}>{formatPrBanner(prBannerKinds)}</p>
+            ) : null}
 
-          <div className={styles.controls}>
-            {exercisesById.get(currentExerciseId ?? '')?.loadType !== 'time' ? (
-              <>
-                <div className={styles.weightRow}>
+            <div className={styles.controls}>
+              {activeExercise?.loadType !== 'time' ? (
+                <>
                   <Stepper
+                    variant="card"
+                    size="weight"
                     value={weightKg}
-                    step={Math.max(exercisesById.get(currentExerciseId ?? '')?.defaultIncrementKg ?? 2.5, 1.25)}
+                    step={weightStep}
                     unit="kg"
-                    fontSizePx={72}
+                    fontSizePx={52}
                     decimals={1}
+                    decrementAriaLabel={`Réduire le poids de ${weightStep.toFixed(weightStep % 1 === 0 ? 0 : 2).replace('.', ',')} kilos`}
+                    incrementAriaLabel={`Augmenter le poids de ${weightStep.toFixed(weightStep % 1 === 0 ? 0 : 2).replace('.', ',')} kilos`}
                     onChange={setWeightKg}
                   />
-                </div>
-                <div className={styles.repsRow}>
-                  <Stepper value={reps} step={1} unit="reps" fontSizePx={28} onChange={setReps} />
-                </div>
-              </>
-            ) : (
-              <div className={styles.timeRow}>
+                  <Stepper
+                    variant="card"
+                    size="reps"
+                    value={reps}
+                    step={1}
+                    unit={isUnilateral ? 'reps /côté' : 'reps'}
+                    fontSizePx={38}
+                    decrementAriaLabel="Réduire d'une répétition"
+                    incrementAriaLabel="Augmenter d'une répétition"
+                    onChange={setReps}
+                  />
+                </>
+              ) : (
                 <Stepper
+                  variant="card"
+                  size="weight"
                   value={currentItem?.durationSec ?? 30}
                   step={5}
                   min={5}
                   unit="s"
                   fontSizePx={48}
+                  decrementAriaLabel="Réduire la durée de 5 secondes"
+                  incrementAriaLabel="Augmenter la durée de 5 secondes"
                   onChange={(durationSec) => currentItem && updateItemPrescription(currentItem.id, { durationSec })}
                 />
-              </div>
-            )}
-            {(step.kind !== 'superset' || subIndex === step.items.length - 1) && (
-              <div className={styles.restRow}>
-                <span className={styles.restLabel}>Repos</span>
+              )}
+              {(step.kind !== 'superset' || subIndex === step.items.length - 1) && (
                 <Stepper
+                  variant="card"
+                  size="rest"
                   value={currentItem?.restSec ?? 90}
                   step={15}
                   min={0}
+                  valuePrefix="Repos"
                   unit="s"
                   fontSizePx={16}
+                  decrementAriaLabel="Réduire le repos de 15 secondes"
+                  incrementAriaLabel="Augmenter le repos de 15 secondes"
                   onChange={(restSec) => currentItem && updateItemPrescription(currentItem.id, { restSec })}
                 />
-              </div>
-            )}
-          </div>
-
-          <EffortChips
-            setKind={setKind}
-            onSetKindChange={setSetKind}
-            rir={rir}
-            onRirChange={setRir}
-          />
-
-          <div className={styles.actions}>
-            <BigButton variant="primary" onClick={() => void handleValidate()}>
-              VALIDER
-            </BigButton>
-            <div className={styles.secondary}>
-              <BigButton variant="ghost" onClick={() => setShowSubstitute(true)}>
-                <SwapIcon className="icon-inline" /> Remplacer
-              </BigButton>
-              <BigButton variant="ghost" onClick={() => setShowNote(true)}>
-                <PencilIcon className="icon-inline" /> Noter
-              </BigButton>
-              <BigButton variant="ghost" onClick={() => void handleSkip()}>
-                Ignorer
-              </BigButton>
+              )}
             </div>
-            {loggedSets.length > 0 && (
+
+            <EffortChips
+              setKind={setKind}
+              onSetKindChange={setSetKind}
+              rir={rir}
+              onRirChange={setRir}
+            />
+
+            {setHint ? (
+              <p className={styles.setHint} role="status">
+                {setHint}
+              </p>
+            ) : null}
+
+            <div className={styles.actions}>
+              <BigButton
+                variant="primary"
+                className={styles.validateBtn}
+                onClick={() => void handleValidate()}
+              >
+                VALIDER LA SÉRIE {setIndex}
+              </BigButton>
+              <div className={styles.secondary}>
+                <BigButton
+                  variant="ghost"
+                  className={styles.secondaryBtn}
+                  onClick={() => setShowSubstitute(true)}
+                >
+                  <SwapIcon className="icon-inline" /> Remplacer
+                </BigButton>
+                <BigButton
+                  variant="ghost"
+                  className={styles.secondaryBtn}
+                  onClick={() => setShowNote(true)}
+                >
+                  <PencilIcon className="icon-inline" /> Noter
+                </BigButton>
+                <BigButton
+                  variant="ghost"
+                  className={styles.secondaryBtn}
+                  onClick={() => void handleSkip()}
+                >
+                  <SkipIcon className="icon-inline" /> Ignorer
+                </BigButton>
+              </div>
               <button
                 type="button"
                 className={styles.undoSet}
+                disabled={loggedSets.length === 0}
                 onClick={() =>
                   void (async () => {
-                    const last = loggedSets[loggedSets.length - 1]!;
+                    const last = loggedSets[loggedSets.length - 1];
+                    if (!last) return;
                     await removeSet(last.id);
                     if (workoutExerciseId) setLoggedSets(await getSetLogs(workoutExerciseId));
                     setSetIndex((n) => Math.max(1, n - 1));
@@ -731,7 +777,7 @@ export function ActiveSessionScreen() {
               >
                 <UndoIcon className="icon-inline" /> Annuler la dernière série
               </button>
-            )}
+            </div>
           </div>
         </>
       )}

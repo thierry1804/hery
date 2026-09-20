@@ -162,22 +162,29 @@
 
 ### D7 — Coach (moteur de règles déterministe)
 
-**Responsabilité** : transformer l'historique en une suggestion **explicable**.
+**Responsabilité** : transformer l'historique en une suggestion **explicable**, centrée sur charge + reps + **RIR**.
+
+Spec détaillée : [`docs/superpowers/specs/2026-09-20-coach-v2-design.md`](superpowers/specs/2026-09-20-coach-v2-design.md).
 
 | Code | Règle | Déclencheur | Suggestion |
 |---|---|---|---|
-| C-01 | Double progression | Toutes les répétitions cibles atteintes sur toutes les séries, 2 séances consécutives | +1 incrément de charge (2,5 kg barre/machine, 1,25 kg haltère) |
-| C-02 | Régression de charge | Échec de plus de 2 répétitions sous la cible, 2 séances consécutives | −1 incrément |
-| C-03 | Plateau | e1RM stable à ±2 % sur 3 séances | Proposer variation d'exercice ou deload |
-| C-04 | Deload | 2 séances consécutives sans progression **ou** RPE ≥ 9 sur plus de la moitié des exercices | Semaine à −40 % de volume |
-| C-05 | Passage de phase | Fin du mois calendaire du cycle | Appliquer les règles de la phase suivante (`RG-05`) |
-| C-06 | Volume insuffisant | Groupe musculaire < 8 séries pondérées/semaine sur 2 semaines | Signaler dans l'écran Progression |
-| C-07 | Garde-fou | Toute suggestion cumulée > +10 % de charge sur 4 semaines | Suggestion bloquée et expliquée |
+| C-01 | Progression | 2 séances consécutives « bonnes » (reps ≥ max **et** RIR ≥ cible min, **aucune** série work à RIR 0) | +1 incrément (`increase`) |
+| C-02 | Régression | ≥ 2 séries work à RIR 0 **ou** reps < min avec RIR ≤ 1 | −1 incrément (`decrease`) |
+| C-03 | Plateau | e1RM stable à ±2 % sur 3 séances | Proposer variation (`vary`) |
+| C-04 | Deload | Fatigue/douleur élevée **ou** majorité d’exercices à RIR ≤ 1 **ou** stall généralisé | Semaine à −40 % de volume |
+| C-05 | Passage de phase | Changement de phase du cycle | Informer (`inform`) |
+| C-06 | Volume insuffisant | Groupe musculaire < 8 séries pondérées/semaine sur 2 semaines | Signaler (`inform`) |
+| C-07 | Garde-fou | Hausse > +10 % de charge sur 4 semaines | Suggestion bloquée |
+| C-08 | Consolidation | Charge à maintenir (RIR 0 ponctuel, reps dans la plage, etc.) | `hold` — même charge, viser meilleur contrôle |
+| C-09 | Confirmation | Exactement 1 séance « bonne » | `repeat` avant hausse |
+| C-10 | Surveillance | Historique non comparable **ou** douleur ≥ 5 récente | `watch` — pas de delta kg auto |
 
 **Règles**
 - `RG-21` Toute suggestion est accompagnée de sa justification en une phrase, dérivée de la règle appliquée.
 - `RG-22` Aucune suggestion n'est appliquée automatiquement : l'utilisateur valide toujours.
 - `RG-23` Aucune suggestion de hausse pendant la phase *réadaptation* (mois 1).
+- `RG-26` Jamais d’`increase` si la dernière séance work contient une série à RIR 0.
+- `RG-27` HOLD / REPEAT / WATCH sont des résultats normaux, pas des absences de suggestion.
 
 ### D8 — Données
 

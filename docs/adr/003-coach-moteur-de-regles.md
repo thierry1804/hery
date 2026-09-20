@@ -50,3 +50,11 @@ aucune adaptation aux cas atypiques.
 qu'un besoin apparaît sur des variations d'exercices ou des reformulations. Dans ce cas,
 le LLM viendrait **en complément** du moteur, jamais en remplacement : les garde-fous
 resteraient codés.
+
+## Évolution 2026-09-20 — Coach v2 RIR-centric
+
+Le moteur reste déterministe (cette ADR inchangée sur le fond). Les actions s’étendent à
+`increase | hold | decrease | repeat | watch | deload | vary | inform`, avec le RIR comme
+critère central de progression, une mémoire par exercice, un niveau de confiance, et des
+surfaces avant / pendant / après séance. Voir
+`docs/superpowers/specs/2026-09-20-coach-v2-design.md`. Le LLM reste hors de la décision.
