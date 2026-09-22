@@ -51,6 +51,20 @@
   font-size: var(--fs-14);
 }
 
+.more {
+  width: 100%;
+  margin-top: var(--space-2);
+  padding: var(--space-2) 0;
+  min-height: 44px;
+  background: none;
+  border: none;
+  color: var(--acier);
+  font-size: var(--fs-14);
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
 @media (max-width: 380px) {
   .row {
     grid-template-columns: minmax(0, 1fr) auto;

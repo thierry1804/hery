@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import App from '../../src/App';
 import { LiftsList } from '../../src/features/progress/LiftsList';
+import { ProgressScreen } from '../../src/features/progress/ProgressScreen';
 import { RecentPrsList } from '../../src/features/progress/RecentPrsList';
 import { TodayProgressCard } from '../../src/features/progress/TodayProgressCard';
 import { WeekTonnageBars } from '../../src/features/progress/WeekTonnageBars';
@@ -139,6 +140,63 @@ describe('progress components', () => {
     expect(screen.getAllByText('5 × 82,5 kg')).toHaveLength(2);
     expect(screen.getByText('+2,5')).toBeInTheDocument();
     expect(screen.getByText('—')).toBeInTheDocument();
+  });
+
+  it('plafonne la liste des mouvements et deplie le reste au clic sur "Voir tout"', () => {
+    const lifts = Array.from({ length: 10 }, (_, i) => ({
+      exerciseId: `ex-${i}`,
+      name: `Exercice ${i}`,
+      lastWeightKg: 50,
+      lastReps: 8,
+      prevMaxKg: null,
+      deltaKg: null,
+    }));
+
+    render(<LiftsList lifts={lifts} />);
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(8);
+    expect(screen.getByText('Exercice 7')).toBeInTheDocument();
+    expect(screen.queryByText('Exercice 8')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Voir tout (10)' }));
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(10);
+    expect(screen.getByText('Exercice 9')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Voir tout/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('ProgressScreen tabs', () => {
+  it('regroupe les sections en 3 onglets, un seul visible a la fois', async () => {
+    vi.mocked(getProgressSnapshot).mockResolvedValue({
+      hasAnyCompletedWorkout: true,
+      week: { sessionsDone: 2, sessionsTarget: 3, tonnageKg: 1250, prCount: 1 },
+      weekBars: [],
+      movers: [],
+      recentPrs: [],
+      lifts: [],
+      muscleBalance: [],
+      muscleFatigue: [],
+      muscleVolumeWindows: [],
+      coachSuggestions: [],
+      streak: { currentStreakWeeks: 0, activeDaysThisMonth: 0 },
+      exerciseHistories: [],
+    });
+
+    render(<ProgressScreen />);
+
+    // Onglet "Aperçu" actif par defaut.
+    expect(await screen.findByText('Régularité')).toBeInTheDocument();
+    expect(screen.queryByText('Volume musculaire — 7 / 28 jours')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mouvements')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Muscles' }));
+    expect(screen.getByText('Volume musculaire — 7 / 28 jours')).toBeInTheDocument();
+    expect(screen.queryByText('Régularité')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Exercices' }));
+    expect(screen.getByText('Mouvements')).toBeInTheDocument();
+    expect(screen.queryByText('Volume musculaire — 7 / 28 jours')).not.toBeInTheDocument();
   });
 });
 

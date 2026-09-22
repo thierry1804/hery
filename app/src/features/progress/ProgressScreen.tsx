@@ -28,8 +28,17 @@ const EMPTY_SNAPSHOT: ProgressSnapshot = {
   exerciseHistories: [],
 };
 
+const TABS = [
+  { id: 'apercu', label: 'Aperçu' },
+  { id: 'muscles', label: 'Muscles' },
+  { id: 'exercices', label: 'Exercices' },
+] as const;
+
+type TabId = (typeof TABS)[number]['id'];
+
 export function ProgressScreen() {
   const [snapshot, setSnapshot] = useState<ProgressSnapshot | null>(null);
+  const [tab, setTab] = useState<TabId>('apercu');
 
   useEffect(() => {
     void getProgressSnapshot()
@@ -49,54 +58,98 @@ export function ProgressScreen() {
         </p>
       ) : (
         <>
-          <section className={styles.summary} aria-label="Cette semaine">
-            <WeekSummary week={snapshot.week} />
-          </section>
+          <div className={styles.tabs} role="tablist" aria-label="Sections de la progression">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                id={`progress-tab-${t.id}`}
+                aria-selected={tab === t.id}
+                aria-controls={`progress-panel-${t.id}`}
+                className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
 
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Régularité</h2>
-            <StreakSummary streak={snapshot.streak} />
-          </section>
+          {tab === 'apercu' && (
+            <div
+              className={styles.panel}
+              role="tabpanel"
+              id="progress-panel-apercu"
+              aria-labelledby="progress-tab-apercu"
+            >
+              <section className={styles.summary} aria-label="Cette semaine">
+                <WeekSummary week={snapshot.week} />
+              </section>
 
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Tonnage — 4 semaines</h2>
-            <WeekTonnageBars bars={snapshot.weekBars} />
-          </section>
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Régularité</h2>
+                <StreakSummary streak={snapshot.streak} />
+              </section>
 
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Coach — prochaine séance</h2>
-            <CoachSuggestions suggestions={snapshot.coachSuggestions} />
-          </section>
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Tonnage — 4 semaines</h2>
+                <WeekTonnageBars bars={snapshot.weekBars} />
+              </section>
 
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Volume musculaire — 7 / 28 jours</h2>
-            <MuscleVolumeWindows volumes={snapshot.muscleVolumeWindows} />
-          </section>
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Coach — prochaine séance</h2>
+                <CoachSuggestions suggestions={snapshot.coachSuggestions} />
+              </section>
+            </div>
+          )}
 
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Équilibre musculaire — cette semaine</h2>
-            <MuscleBalanceBars balance={snapshot.muscleBalance} />
-          </section>
+          {tab === 'muscles' && (
+            <div
+              className={styles.panel}
+              role="tabpanel"
+              id="progress-panel-muscles"
+              aria-labelledby="progress-tab-muscles"
+            >
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Volume musculaire — 7 / 28 jours</h2>
+                <MuscleVolumeWindows volumes={snapshot.muscleVolumeWindows} />
+              </section>
 
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Fatigue musculaire</h2>
-            <MuscleFatigueBars fatigue={snapshot.muscleFatigue} />
-          </section>
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Équilibre musculaire — cette semaine</h2>
+                <MuscleBalanceBars balance={snapshot.muscleBalance} />
+              </section>
 
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Progression par exercice</h2>
-            <ExerciseTrendChart histories={snapshot.exerciseHistories} />
-          </section>
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Fatigue musculaire</h2>
+                <MuscleFatigueBars fatigue={snapshot.muscleFatigue} />
+              </section>
+            </div>
+          )}
 
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Records récents</h2>
-            <RecentPrsList prs={snapshot.recentPrs} />
-          </section>
+          {tab === 'exercices' && (
+            <div
+              className={styles.panel}
+              role="tabpanel"
+              id="progress-panel-exercices"
+              aria-labelledby="progress-tab-exercices"
+            >
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Progression par exercice</h2>
+                <ExerciseTrendChart histories={snapshot.exerciseHistories} />
+              </section>
 
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Mouvements</h2>
-            <LiftsList lifts={snapshot.lifts} />
-          </section>
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Records récents</h2>
+                <RecentPrsList prs={snapshot.recentPrs} />
+              </section>
+
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Mouvements</h2>
+                <LiftsList lifts={snapshot.lifts} />
+              </section>
+            </div>
+          )}
         </>
       )}
     </main>
