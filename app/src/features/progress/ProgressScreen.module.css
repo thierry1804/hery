@@ -5,6 +5,7 @@
   max-width: 560px;
   margin: 0 auto;
   padding: var(--space-4);
+  padding-top: calc(var(--space-4) + env(safe-area-inset-top));
   padding-left: max(var(--space-4), env(safe-area-inset-left));
   padding-right: max(var(--space-4), env(safe-area-inset-right));
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
@@ -43,7 +44,9 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-2);
   position: sticky;
-  top: 0;
+  /* top: 0 seul recollerait la barre sous l'encoche/heure en PWA standalone une fois le titre
+     scrolle hors ecran ; on colle plutot juste sous la zone sure. */
+  top: env(safe-area-inset-top);
   z-index: 1;
   padding: var(--space-2) 0;
   margin: 0 calc(var(--space-4) * -1);
