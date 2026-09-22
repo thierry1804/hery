@@ -10,7 +10,7 @@ interface SummaryLocationState {
   lines?: CoachProposalLine[];
 }
 
-const TONE_CLASS: Record<AppreciationTone, string> = {
+const TONE_CLASS: Record<AppreciationTone, string | undefined> = {
   positive: styles.appreciationPositive,
   neutral: styles.appreciationNeutral,
   caution: styles.appreciationCaution,

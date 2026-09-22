@@ -13,7 +13,7 @@ import styles from './SessionBriefScreen.module.css';
 export function SessionBriefScreen() {
   const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
-  const [template, setTemplate] = useState<SessionTemplate | null | undefined>(undefined);
+  const [template, setTemplate] = useState<SessionTemplate | undefined>(undefined);
   const [items, setItems] = useState<PrescribedItem[]>([]);
   const [briefLines, setBriefLines] = useState<{ name: string; text: string }[]>([]);
   const [painWatch, setPainWatch] = useState(false);

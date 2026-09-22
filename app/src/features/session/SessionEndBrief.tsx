@@ -5,7 +5,7 @@ import styles from './SessionEndBrief.module.css';
 
 // Meme code couleur que l'appreciation globale (domain/session-appreciation) : progression =
 // positif, statu quo = neutre, reduction/vigilance = a surveiller.
-const STATUS_BADGE_CLASS: Record<ExerciseProgressionMemory['status'], string> = {
+const STATUS_BADGE_CLASS: Record<ExerciseProgressionMemory['status'], string | undefined> = {
   increase: styles.badgePositive,
   hold: styles.badgeNeutral,
   repeat: styles.badgeNeutral,
