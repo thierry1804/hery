@@ -1,6 +1,8 @@
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { TodayScreen } from './features/today/TodayScreen';
 import { ActiveSessionScreen } from './features/session/ActiveSessionScreen';
+import { SessionBriefScreen } from './features/session/SessionBriefScreen';
+import { SessionSummaryScreen } from './features/session/SessionSummaryScreen';
 import { HistoryScreen } from './features/history/HistoryScreen';
 import { WorkoutDetailScreen } from './features/history/WorkoutDetailScreen';
 import { ProgressScreen } from './features/progress/ProgressScreen';
@@ -12,17 +14,23 @@ import { LoginScreen } from './features/auth/LoginScreen';
 import { RegisterScreen } from './features/auth/RegisterScreen';
 import { SyncBootstrap } from './sync/SyncBootstrap';
 import { BottomNav } from './ui/BottomNav';
+import { useWakeLock } from './features/session/useWakeLock';
 
 export default function App() {
   const location = useLocation();
   const isSession = location.pathname.startsWith('/session/');
+
+  // Ecran allume tant que l'application est ouverte, pas seulement pendant une seance active.
+  useWakeLock(true);
 
   return (
     <>
       <SyncBootstrap />
       <Routes>
         <Route path="/" element={<TodayScreen />} />
+        <Route path="/session/brief/:templateId" element={<SessionBriefScreen />} />
         <Route path="/session/:workoutId" element={<ActiveSessionScreen />} />
+        <Route path="/session/:workoutId/summary" element={<SessionSummaryScreen />} />
         <Route path="/history" element={<HistoryScreen />} />
         <Route path="/history/:workoutId" element={<WorkoutDetailScreen />} />
         <Route path="/progress" element={<ProgressScreen />} />

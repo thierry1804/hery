@@ -36,7 +36,6 @@ import { RestOverlay } from './RestOverlay';
 import { SetInput } from './SetInput';
 import { SubstituteDialog } from './SubstituteDialog';
 import { NoteDialog } from './NoteDialog';
-import { useWakeLock } from './useWakeLock';
 import { useSessionStore } from './session.store';
 import { confirmSetFeedback } from '../../lib/haptics';
 import { FlameIcon, HeartIcon, PencilIcon, SkipIcon, StretchIcon, SwapIcon, UndoIcon } from '../../ui/icons';
@@ -45,12 +44,7 @@ import { getMemoriesByExerciseIds, recomputeAllExerciseMemories } from '../../re
 import { CoachTip, hasCoachTip } from './CoachTip';
 import styles from './ActiveSessionScreen.module.css';
 import { getAcceptedCoachTarget } from '../../repositories/coach-target.repo';
-import {
-  applyCoachProposalsForWorkout,
-  getWorkoutCoachBrief,
-  type CoachProposalLine,
-} from '../../repositories/coach-apply.repo';
-import { SessionEndBrief } from './SessionEndBrief';
+import { applyCoachProposalsForWorkout } from '../../repositories/coach-apply.repo';
 
 type Step =
   | { kind: 'warmup'; items: PrescribedItem[] }
@@ -125,6 +119,7 @@ export function ActiveSessionScreen() {
   const [restTotalSec, setRestTotalSec] = useState(90);
   const [restNextLoadKg, setRestNextLoadKg] = useState<number | null>(null);
   const [restNextReps, setRestNextReps] = useState<number | null>(null);
+  const [restNextRepsRange, setRestNextRepsRange] = useState<[number, number] | null>(null);
   const [pendingAdvance, setPendingAdvance] = useState(false);
 
   const [currentExerciseId, setCurrentExerciseId] = useState<string | null>(null);
@@ -159,7 +154,7 @@ export function ActiveSessionScreen() {
   const [editEndedLocal, setEditEndedLocal] = useState('');
   const [timeError, setTimeError] = useState<string | null>(null);
 
-  useWakeLock(!finished);
+  // Verrou d'ecran gere globalement dans App.tsx tant que l'application est ouverte.
 
   useEffect(() => {
     setActiveWorkoutId(workoutId);
@@ -299,12 +294,17 @@ export function ActiveSessionScreen() {
     if (restEndsAt == null) {
       setRestNextLoadKg(null);
       setRestNextReps(null);
+      setRestNextRepsRange(null);
       return;
     }
 
     if (!pendingAdvance && step?.kind === 'exercise') {
-      setRestNextLoadKg(weightKg);
-      setRestNextReps(reps);
+      // Repos entre deux series du meme exercice : aligner sur l'objectif coach (meme
+      // charge/reps que le brief de seance), pas sur la saisie en cours qui peut avoir ete
+      // ajustee manuellement pour cette serie precise.
+      setRestNextLoadKg(coachMemory?.suggestedLoadKg ?? coachMemory?.currentLoadKg ?? weightKg);
+      setRestNextRepsRange(coachMemory?.targetReps ?? null);
+      setRestNextReps(coachMemory ? null : reps);
       return;
     }
 
@@ -318,6 +318,7 @@ export function ActiveSessionScreen() {
     if (!exerciseId || exercisesById.get(exerciseId)?.loadType !== 'weight') {
       setRestNextLoadKg(null);
       setRestNextReps(null);
+      setRestNextRepsRange(null);
       return;
     }
 
@@ -325,16 +326,24 @@ export function ActiveSessionScreen() {
     void Promise.all([
       getAcceptedCoachTarget(exerciseId),
       getLastCompletedSets(exerciseId, workoutId),
-    ]).then(([coachTarget, previousSets]) => {
+      getMemoriesByExerciseIds([exerciseId]),
+    ]).then(([coachTarget, previousSets, memories]) => {
       if (cancelled) return;
+      const mem = memories.get(exerciseId);
       const previous = previousSets.find((set) => set.index === 1) ?? previousSets[0];
-      setRestNextLoadKg(coachTarget ?? previous?.weightKg ?? null);
-      setRestNextReps(previous?.reps ?? targetItem?.repsTarget ?? null);
+      setRestNextLoadKg(coachTarget ?? mem?.suggestedLoadKg ?? mem?.currentLoadKg ?? previous?.weightKg ?? null);
+      if (mem) {
+        setRestNextRepsRange(mem.targetReps);
+        setRestNextReps(null);
+      } else {
+        setRestNextRepsRange(null);
+        setRestNextReps(previous?.reps ?? targetItem?.repsTarget ?? null);
+      }
     });
     return () => { cancelled = true; };
-  }, [restEndsAt, pendingAdvance, step, steps, itemIndex, exercisesById, weightKg, reps, workoutId]);
+  }, [restEndsAt, pendingAdvance, step, steps, itemIndex, exercisesById, weightKg, reps, workoutId, coachMemory]);
 
-  if (finished) return <FinishedView workoutId={workoutId} onDone={() => navigate('/')} />;
+  if (finished) return <FinishedView workoutId={workoutId} />;
   if (!workout || !step) {
     return (
       <div className={styles.screen} aria-busy="true">
@@ -868,6 +877,7 @@ export function ActiveSessionScreen() {
           nextHint={restNextHint}
           nextLoadKg={restNextLoadKg}
           nextReps={restNextReps}
+          nextRepsRange={restNextRepsRange}
           onExtend={extendRest}
           onSkip={finishRest}
           onComplete={finishRest}
@@ -1097,18 +1107,29 @@ function CardioBlock({
   );
 }
 
-function FinishedView({ workoutId, onDone }: { workoutId: string; onDone: () => void }) {
+const FATIGUE_LABELS: Record<number, string> = {
+  1: 'Frais — tu repartirais pour un tour.',
+  2: 'Léger — un peu sollicité, rien de marquant.',
+  3: 'Modéré — fatigue normale de fin de séance.',
+  4: 'Élevée — bien entamé, récupération à surveiller.',
+  5: 'Épuisé — à la limite. Récurrent sur plusieurs séances, le coach allège la charge.',
+};
+
+const PAIN_LABELS: Record<number, string> = {
+  0: 'Aucune douleur.',
+  2: 'Légère — gênante mais pas limitante.',
+  5: 'Modérée — limite le mouvement. Le coach met les charges en pause sur les exercices concernés.',
+  8: 'Sévère — quasi invalidante.',
+};
+
+function FinishedView({ workoutId }: { workoutId: string }) {
+  const navigate = useNavigate();
   const [fatigueLevel, setFatigueLevel] = useState<number | null>(null);
   const [painLevel, setPainLevel] = useState<number | null>(null);
   const [painArea, setPainArea] = useState('');
   const [bodyweightKg, setBodyweightKg] = useState<number | null>(null);
   const [isDeload, setIsDeload] = useState(false);
-  const [briefLines, setBriefLines] = useState<CoachProposalLine[]>([]);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    void getWorkoutCoachBrief(workoutId).then(setBriefLines);
-  }, [workoutId]);
 
   const saveAndClose = async () => {
     if (saving) return;
@@ -1116,8 +1137,8 @@ function FinishedView({ workoutId, onDone }: { workoutId: string; onDone: () => 
     try {
       await updateWorkoutRecovery(workoutId, { fatigueLevel, painLevel, painArea, bodyweightKg, isDeload });
       await recomputeAllExerciseMemories();
-      await applyCoachProposalsForWorkout(workoutId);
-      onDone();
+      const lines = await applyCoachProposalsForWorkout(workoutId);
+      navigate(`/session/${workoutId}/summary`, { replace: true, state: { lines } });
     } finally {
       setSaving(false);
     }
@@ -1127,12 +1148,19 @@ function FinishedView({ workoutId, onDone }: { workoutId: string; onDone: () => 
       <div className={styles.finished}>
         <h1 className={styles.exerciseName}>Séance terminée</h1>
         <p className={styles.lastTime}>Enregistrée sur cet appareil.</p>
-        <SessionEndBrief lines={briefLines} />
         <div className={styles.recoveryForm}>
           <p>Fatigue ressentie</p>
           <ChoiceRow values={[1, 2, 3, 4, 5]} selected={fatigueLevel} onSelect={setFatigueLevel} />
+          <p className={styles.recoveryHint} aria-live="polite">
+            {fatigueLevel != null ? FATIGUE_LABELS[fatigueLevel] : 'Choisis un niveau (1 à 5).'}
+          </p>
           <p>Douleur</p>
           <ChoiceRow values={[0, 2, 5, 8]} selected={painLevel} onSelect={setPainLevel} />
+          <p className={styles.recoveryHint} aria-live="polite">
+            {painLevel != null
+              ? PAIN_LABELS[painLevel]
+              : 'Douleur articulaire ou tendineuse, pas la simple courbature musculaire.'}
+          </p>
           {painLevel != null && painLevel > 0 ? (
             <input aria-label="Zone douloureuse" placeholder="Zone douloureuse (optionnel)" value={painArea} onChange={(event) => setPainArea(event.target.value)} />
           ) : null}
@@ -1140,7 +1168,7 @@ function FinishedView({ workoutId, onDone }: { workoutId: string; onDone: () => 
           <label><input type="checkbox" checked={isDeload} onChange={(event) => setIsDeload(event.target.checked)} /> Séance allégée / deload</label>
         </div>
         <BigButton variant="primary" disabled={saving} onClick={() => void saveAndClose()}>
-          {briefLines.length > 0 ? 'Acter et retour' : 'Retour à l\'accueil'}
+          Voir le bilan
         </BigButton>
       </div>
     </div>

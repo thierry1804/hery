@@ -543,6 +543,14 @@
   font-weight: 700;
 }
 
+.recoveryForm p.recoveryHint {
+  margin: 0 0 4px;
+  font-weight: 400;
+  font-size: var(--fs-14);
+  line-height: 1.4;
+  color: var(--fonte-300);
+}
+
 .recoveryForm input[type='number'],
 .recoveryForm input[type='text'],
 .recoveryForm input:not([type]) {

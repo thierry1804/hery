@@ -1,0 +1,104 @@
+.screen {
+  height: 100dvh;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4);
+  padding-top: calc(var(--space-5) + env(safe-area-inset-top));
+  padding-left: max(var(--space-4), env(safe-area-inset-left));
+  padding-right: max(var(--space-4), env(safe-area-inset-right));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  overflow: hidden;
+}
+
+.header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Seule zone qui defile : le bouton "Retour a l'accueil" reste toujours visible en bas. */
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
+  font-weight: 800;
+  font-size: clamp(1.25rem, 5vw, var(--fs-28));
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  color: var(--fonte-300);
+  font-size: var(--fs-14);
+  margin: 0;
+}
+
+.empty {
+  color: var(--fonte-300);
+  font-size: var(--fs-16);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.appreciation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--fonte-700);
+  border-radius: var(--radius-block);
+  border-left: 3px solid var(--acier);
+}
+
+.appreciationHeadline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
+  font-weight: 800;
+  font-size: var(--fs-20);
+  color: var(--magnesie);
+}
+
+.appreciationAdvice {
+  margin: 0;
+  font-size: var(--fs-14);
+  color: var(--fonte-300);
+  line-height: 1.4;
+}
+
+.appreciationPositive {
+  border-left-color: var(--laiton);
+}
+
+.appreciationNeutral {
+  border-left-color: var(--acier);
+}
+
+.appreciationCaution {
+  border-left-color: var(--sang);
+}
+
+.footer {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  padding-bottom: env(safe-area-inset-bottom);
+}

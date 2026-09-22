@@ -1,20 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Exercise, PrescribedItem, SessionTemplate, Workout } from '../../db/schema';
-import { getAllTemplates, getPrescribedItems, getTemplateById, getTemplateForDay } from '../../repositories/program.repo';
+import { getAllTemplates, getPrescribedItems, getTemplateForDay } from '../../repositories/program.repo';
 import { getExercisesByIds } from '../../repositories/exercises.repo';
-import { getResumableWorkout, startWorkout } from '../../repositories/workouts.repo';
-import {
-  getMemoriesByExerciseIds,
-  recomputeAllExerciseMemories,
-} from '../../repositories/exercise-memory.repo';
-import { db } from '../../db/db';
+import { getResumableWorkout } from '../../repositories/workouts.repo';
 import { dayOfWeekIso } from '../../lib/date';
 import { BigButton } from '../../ui/BigButton';
 import { FlameIcon, HeartIcon, StretchIcon } from '../../ui/icons';
 import { TodayProgressCard } from '../progress/TodayProgressCard';
-import { buildBriefLines } from './brief-lines';
-import { SessionBrief } from './SessionBrief';
 import styles from './TodayScreen.module.css';
 
 const DAY_NAMES = ['', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
@@ -42,32 +35,6 @@ function nextProgramDayLabel(templates: SessionTemplate[], fromDay: number): str
   return null;
 }
 
-async function loadBriefForExerciseIds(ids: string[]): Promise<{
-  lines: { name: string; text: string }[];
-  painWatch: boolean;
-}> {
-  const unique = [...new Set(ids.filter(Boolean))];
-  if (unique.length === 0) return { lines: [], painWatch: false };
-
-  let memories = await getMemoriesByExerciseIds(unique);
-  const missing = unique.some((id) => !memories.has(id));
-  if (missing) {
-    await recomputeAllExerciseMemories();
-    memories = await getMemoriesByExerciseIds(unique);
-  }
-
-  const exs = await getExercisesByIds(unique);
-  const exercisesById = new Map(exs.map((e) => [e.id, e]));
-  const lines = buildBriefLines(unique, exercisesById, memories);
-
-  const recent = await db.workouts
-    .filter((w) => w.deletedAt == null && w.status === 'completed')
-    .toArray();
-  recent.sort((a, b) => (a.date < b.date ? 1 : -1));
-  const painWatch = (recent[0]?.painLevel ?? 0) >= 5;
-  return { lines, painWatch };
-}
-
 export function TodayScreen() {
   const navigate = useNavigate();
   const [template, setTemplate] = useState<SessionTemplate | null | undefined>(undefined);
@@ -75,8 +42,6 @@ export function TodayScreen() {
   const [exercisesById, setExercisesById] = useState<Map<string, Exercise>>(new Map());
   const [resumable, setResumable] = useState<Workout | undefined>(undefined);
   const [allTemplates, setAllTemplates] = useState<SessionTemplate[]>([]);
-  const [briefLines, setBriefLines] = useState<{ name: string; text: string }[]>([]);
-  const [painWatch, setPainWatch] = useState(false);
 
   const loadTemplate = async (tpl: SessionTemplate) => {
     setTemplate(tpl);
@@ -85,9 +50,6 @@ export function TodayScreen() {
     const ids = Array.from(new Set(prescribed.map((i) => i.exerciseId).filter((x): x is string => !!x)));
     const exs = await getExercisesByIds(ids);
     setExercisesById(new Map(exs.map((e) => [e.id, e])));
-    const brief = await loadBriefForExerciseIds(ids);
-    setBriefLines(brief.lines);
-    setPainWatch(brief.painWatch);
   };
 
   useEffect(() => {
@@ -102,26 +64,6 @@ export function TodayScreen() {
         return;
       }
       setTemplate(null);
-      if (r) {
-        const ids = r.templateSnapshot
-          .map((item) => item.exerciseId)
-          .filter((id): id is string => !!id);
-        if (ids.length === 0 && r.sessionTemplateId) {
-          const resumeTpl = await getTemplateById(r.sessionTemplateId);
-          if (resumeTpl) {
-            const prescribed = await getPrescribedItems(resumeTpl.id);
-            const brief = await loadBriefForExerciseIds(
-              prescribed.map((i) => i.exerciseId).filter((id): id is string => !!id),
-            );
-            setBriefLines(brief.lines);
-            setPainWatch(brief.painWatch);
-            return;
-          }
-        }
-        const brief = await loadBriefForExerciseIds(ids);
-        setBriefLines(brief.lines);
-        setPainWatch(brief.painWatch);
-      }
     })();
   }, []);
 
@@ -135,9 +77,8 @@ export function TodayScreen() {
     );
   }
 
-  const handleStart = async (tpl: SessionTemplate, tplItems: PrescribedItem[]) => {
-    const workout = await startWorkout(tpl, tplItems);
-    navigate(`/session/${workout.id}`);
+  const handleStart = (tpl: SessionTemplate) => {
+    navigate(`/session/brief/${tpl.id}`);
   };
 
   if (template === null) {
@@ -156,8 +97,6 @@ export function TodayScreen() {
           </p>
         </header>
 
-        <SessionBrief lines={briefLines} painWatch={painWatch} />
-
         <TodayProgressCard />
 
         <div className={styles.footer}>
@@ -170,16 +109,7 @@ export function TodayScreen() {
               <p className={styles.plateLabel}>Séance hors programme</p>
               <div className={styles.templateList}>
                 {allTemplates.map((tpl) => (
-                  <BigButton
-                    key={tpl.id}
-                    variant="ghost"
-                    onClick={() =>
-                      void (async () => {
-                        const prescribed = await getPrescribedItems(tpl.id);
-                        await handleStart(tpl, prescribed);
-                      })()
-                    }
-                  >
+                  <BigButton key={tpl.id} variant="ghost" onClick={() => handleStart(tpl)}>
                     {tpl.label}
                   </BigButton>
                 ))}
@@ -237,8 +167,6 @@ export function TodayScreen() {
         )}
       </div>
 
-      <SessionBrief lines={briefLines} painWatch={painWatch} />
-
       <TodayProgressCard />
 
       <div className={styles.footer}>
@@ -247,7 +175,7 @@ export function TodayScreen() {
             Reprendre la séance
           </BigButton>
         ) : (
-          <BigButton variant="primary" onClick={() => void handleStart(template, items)}>
+          <BigButton variant="primary" onClick={() => handleStart(template)}>
             DÉMARRER
           </BigButton>
         )}

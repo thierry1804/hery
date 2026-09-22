@@ -19,6 +19,11 @@ interface DocumentLike {
 
 const RETRY_MIN_MS = 1000;
 const RETRY_MAX_MS = 30000;
+// WebKit relache parfois le verrou en silence (pas d'evenement "release", pas de
+// visibilitychange) — notamment observe pendant les longues periodes sans interaction
+// (ecran de repos entre deux series). On rafraichit donc le verrou tenu a intervalle
+// regulier par securite, en plus des mecanismes evenementiels ci-dessous.
+const HEARTBEAT_MS = 20000;
 // Evenements que les navigateurs comptent comme "activation utilisateur".
 const GESTURE_EVENTS: DocEvent[] = ['click', 'touchend', 'keydown'];
 
@@ -34,6 +39,7 @@ export function createWakeLock(nav: NavigatorLike, doc: DocumentLike) {
   let warned = false;
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
   let retryDelay = RETRY_MIN_MS;
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
   const scheduleRetry = () => {
     if (stopped || retryTimer) return;
@@ -43,6 +49,15 @@ export function createWakeLock(nav: NavigatorLike, doc: DocumentLike) {
       retryTimer = null;
       void acquire();
     }, delay);
+  };
+
+  const attach = (s: WakeLockSentinelLike) => {
+    sentinel = s;
+    retryDelay = RETRY_MIN_MS;
+    s.addEventListener('release', () => {
+      if (sentinel === s) sentinel = null;
+      if (!stopped && doc.visibilityState === 'visible') scheduleRetry();
+    });
   };
 
   const acquire = async (): Promise<void> => {
@@ -56,12 +71,7 @@ export function createWakeLock(nav: NavigatorLike, doc: DocumentLike) {
         void s.release();
         return;
       }
-      sentinel = s;
-      retryDelay = RETRY_MIN_MS;
-      s.addEventListener('release', () => {
-        if (sentinel === s) sentinel = null;
-        if (!stopped && doc.visibilityState === 'visible') scheduleRetry();
-      });
+      attach(s);
     } catch (err) {
       const e = err as { name?: string; message?: string };
       if (!warned) {
@@ -69,6 +79,26 @@ export function createWakeLock(nav: NavigatorLike, doc: DocumentLike) {
         console.warn('[wakeLock] refuse:', e?.name, e?.message);
       }
       scheduleRetry();
+    } finally {
+      pending = false;
+    }
+  };
+
+  // Ne redemande que si un verrou est deja cense etre tenu : rafraichit une reference qui
+  // pourrait etre perimee sans jamais tenter d'acquisition initiale hors geste (ce role reste
+  // a scheduleRetry/onGesture pour respecter la contrainte Safari).
+  const heartbeat = async (): Promise<void> => {
+    if (stopped || pending || sentinel == null || !nav.wakeLock) return;
+    if (doc.visibilityState !== 'visible') return;
+    pending = true;
+    try {
+      const fresh = await nav.wakeLock.request('screen');
+      const stale = sentinel;
+      attach(fresh);
+      if (stale && stale !== fresh) void stale.release().catch(() => {});
+    } catch {
+      // Rafraichissement refuse (pas de geste recent) : le verrou existant, meme suspect, est conserve ;
+      // il sera repris via visibilitychange/geste s'il est effectivement tombe.
     } finally {
       pending = false;
     }
@@ -91,6 +121,7 @@ export function createWakeLock(nav: NavigatorLike, doc: DocumentLike) {
       retryDelay = RETRY_MIN_MS;
       doc.addEventListener('visibilitychange', onVisibilityChange);
       GESTURE_EVENTS.forEach((ev) => doc.addEventListener(ev, onGesture));
+      heartbeatTimer = setInterval(() => void heartbeat(), HEARTBEAT_MS);
       void acquire();
     },
     stop() {
@@ -99,6 +130,8 @@ export function createWakeLock(nav: NavigatorLike, doc: DocumentLike) {
       GESTURE_EVENTS.forEach((ev) => doc.removeEventListener(ev, onGesture));
       if (retryTimer) clearTimeout(retryTimer);
       retryTimer = null;
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
       const s = sentinel;
       sentinel = null;
       void s?.release();
@@ -106,7 +139,9 @@ export function createWakeLock(nav: NavigatorLike, doc: DocumentLike) {
   };
 }
 
-// §5.2: Wake Lock maintenue toute la seance, reacquise sur visibilitychange, release et prochain geste, liberee en fin de seance.
+// Wake Lock maintenue tant que l'application est ouverte (pas seulement pendant une seance) :
+// reacquise sur visibilitychange, sur le prochain geste, et rafraichie periodiquement pour
+// parer aux verrous relaches en silence par le navigateur (cf. HEARTBEAT_MS ci-dessus).
 export function useWakeLock(active: boolean): void {
   useEffect(() => {
     if (!active) return;

@@ -11,6 +11,10 @@ test('parcours complet : démarrer, valider toutes les séries, terminer la séa
   await expect(startButton.first()).toBeVisible({ timeout: 10_000 });
   await startButton.first().click();
 
+  // Brief pre-seance (objectifs) avant le demarrage effectif de la seance.
+  await expect(page).toHaveURL(/\/session\/brief\//);
+  await page.getByRole('button', { name: 'Commencer la séance' }).click();
+
   await expect(page).toHaveURL(/\/session\//);
 
   const validate = page.getByRole('button', { name: /VALIDER/ });
@@ -47,6 +51,10 @@ test('parcours complet : démarrer, valider toutes les séries, terminer la séa
   }
 
   await expect(done).toBeVisible({ timeout: 10_000 });
+
+  // Bilan post-seance (analyse de ce qui a ete fait) dans un ecran distinct.
+  await page.getByRole('button', { name: 'Voir le bilan' }).click();
+  await expect(page.getByRole('heading', { name: 'Bilan de la séance' })).toBeVisible({ timeout: 10_000 });
 
   await page.getByRole('button', { name: "Retour à l'accueil" }).click();
   await page.getByRole('link', { name: 'Historique' }).click();

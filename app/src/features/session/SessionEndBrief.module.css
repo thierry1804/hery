@@ -9,9 +9,6 @@
   border: 1px solid var(--fonte-500);
   border-radius: var(--radius-button);
   box-sizing: border-box;
-  max-height: min(36dvh, 280px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 .title {
@@ -64,7 +61,21 @@
   font-stretch: var(--font-display-stretch);
   font-weight: 700;
   font-size: var(--fs-12);
+}
+
+/* Augmenter : progression actee. */
+.badgePositive {
+  color: var(--laiton);
+}
+
+/* Consolider / Repeter : statu quo, rien a changer. */
+.badgeNeutral {
   color: var(--acier);
+}
+
+/* Reduire / Surveiller : vigilance (fatigue, douleur, donnees peu fiables). */
+.badgeCaution {
+  color: var(--sang);
 }
 
 .name {

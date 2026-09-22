@@ -1,6 +1,17 @@
+import type { ExerciseProgressionMemory } from '../../db/schema';
 import { COACH_STATUS_LABEL } from '../today/brief-lines';
 import type { CoachProposalLine } from '../../repositories/coach-apply.repo';
 import styles from './SessionEndBrief.module.css';
+
+// Meme code couleur que l'appreciation globale (domain/session-appreciation) : progression =
+// positif, statu quo = neutre, reduction/vigilance = a surveiller.
+const STATUS_BADGE_CLASS: Record<ExerciseProgressionMemory['status'], string> = {
+  increase: styles.badgePositive,
+  hold: styles.badgeNeutral,
+  repeat: styles.badgeNeutral,
+  decrease: styles.badgeCaution,
+  watch: styles.badgeCaution,
+};
 
 export function SessionEndBrief({ lines }: { lines: CoachProposalLine[] }) {
   if (lines.length === 0) return null;
@@ -14,7 +25,9 @@ export function SessionEndBrief({ lines }: { lines: CoachProposalLine[] }) {
         {lines.map((line) => (
           <li key={line.exerciseId} className={styles.item}>
             <div className={styles.head}>
-              <span className={styles.badge}>{COACH_STATUS_LABEL[line.status]}</span>
+              <span className={`${styles.badge} ${STATUS_BADGE_CLASS[line.status]}`}>
+                {COACH_STATUS_LABEL[line.status]}
+              </span>
               <strong className={styles.name}>{line.name}</strong>
             </div>
             <p className={styles.text}>{line.text}</p>

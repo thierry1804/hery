@@ -9,6 +9,8 @@ interface Props {
   nextHint?: string;
   nextLoadKg?: number | null;
   nextReps?: number | null;
+  /** Plage de reps visee par le coach (objectif) ; prioritaire sur nextReps quand fournie. */
+  nextRepsRange?: [number, number] | null;
   onExtend: (extraSec: number) => void;
   onSkip: () => void;
   onComplete: () => void;
@@ -19,7 +21,17 @@ const STROKE = 10;
 const RADIUS = (SIZE - STROKE) / 2 - 4;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-export function RestOverlay({ restEndsAt, totalSec, nextHint, nextLoadKg, nextReps, onExtend, onSkip, onComplete }: Props) {
+export function RestOverlay({
+  restEndsAt,
+  totalSec,
+  nextHint,
+  nextLoadKg,
+  nextReps,
+  nextRepsRange,
+  onExtend,
+  onSkip,
+  onComplete,
+}: Props) {
   const { remainingSec, remainingMs } = useRestTimer(restEndsAt, onComplete);
   const totalMs = Math.max(totalSec, 0.001) * 1000;
   const progress = Math.min(1, Math.max(0, remainingMs / totalMs));
@@ -27,10 +39,15 @@ export function RestOverlay({ restEndsAt, totalSec, nextHint, nextLoadKg, nextRe
   const dashOffset = CIRCUMFERENCE * (1 - progress);
   const urgent = remainingSec > 0 && remainingSec <= 10;
   const [min, sec] = formatMmSs(remainingSec).split(':');
-  const nextLoadLabel =
-    nextLoadKg != null
-      ? `${nextLoadKg.toLocaleString('fr-FR')} kg${nextReps != null ? ` × ${nextReps}` : ''}`
+  // Priorite a la plage de reps visee par le coach (objectif de seance) sur le nombre brut
+  // (dernieres reps effectuees / reps prescrites) pour rester aligne avec le brief.
+  const repsLabel = nextRepsRange
+    ? `${nextRepsRange[0]}–${nextRepsRange[1]}`
+    : nextReps != null
+      ? `${nextReps}`
       : null;
+  const nextLoadLabel =
+    nextLoadKg != null ? `${nextLoadKg.toLocaleString('fr-FR')} kg${repsLabel ? ` × ${repsLabel}` : ''}` : null;
 
   // Plus le repos avance, plus le fond s'anime (durée plus courte = tempo plus vif).
   const breathSec = urgent ? 1.4 : 2.2 + progress * 1.6;

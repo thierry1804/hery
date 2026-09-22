@@ -124,6 +124,17 @@ describe('createWakeLock', () => {
     expect(env.request).toHaveBeenCalledTimes(3);
   });
 
+  it('rafraichit le verrou tenu a intervalle regulier (verrou WebKit relache en silence)', async () => {
+    const env = fakeEnv();
+    createWakeLock(env.nav, env.doc).start();
+    await flush();
+    expect(env.request).toHaveBeenCalledTimes(1);
+    // Ni fireRelease ni visibilitychange : simule un verrou tombe sans notifier le sentinel.
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(env.request).toHaveBeenCalledTimes(2);
+    expect(env.sentinels[0].release).toHaveBeenCalled();
+  });
+
   it('espace les essais automatiques apres des refus repetes', async () => {
     const env = fakeEnv();
     env.request.mockRejectedValue(Object.assign(new Error('denied'), { name: 'NotAllowedError' }));
