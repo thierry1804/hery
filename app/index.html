@@ -3,11 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/icons/icon.svg" />
+    <!-- iOS ignore le SVG pour apple-touch-icon (exige un PNG). -->
+    <link rel="apple-touch-icon" href="/icons/icon-180.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#131519" />
     <meta name="description" content="HERY — suivi de musculation, 100% local et hors-ligne." />
+    <!-- Ajout a l'ecran d'accueil iOS : ouvre en plein ecran (sans barre Safari), nom et
+         style de barre de statut corrects. Sans ces balises, "Ajouter a l'ecran d'accueil"
+         cree juste un raccourci qui rouvre Safari avec sa barre d'URL. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="HERY" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
